@@ -34,11 +34,12 @@ export default {
         }
         if (sub === "resolve") {
             const n = interaction.options.getInteger("number", true);
-            const c = await client.services.cases.resolve(interaction.guildId, n, { id: interaction.user.id, tag: interaction.user.tag });
-            if (!c)
+            const existing = await client.services.cases.get(interaction.guildId, n);
+            if (!existing)
                 return interaction.editReply({ embeds: [embeds.error("Not found", `Case #${n} does not exist.`)] });
-            if (!c.resolved)
+            if (existing.resolved)
                 return interaction.editReply({ embeds: [embeds.warn("Already resolved", `Case #${n} was already resolved.`)] });
+            await client.services.cases.resolve(interaction.guildId, n, { id: interaction.user.id, tag: interaction.user.tag });
             return interaction.editReply({ embeds: [embeds.success("Case resolved", `Case #${n} marked resolved.`)] });
         }
         if (sub === "user") {

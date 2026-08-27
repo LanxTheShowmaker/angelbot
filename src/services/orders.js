@@ -44,6 +44,7 @@ export class OrderService {
         this.client = client;
         this.settings = settings;
         this.registerStaticHandlers();
+        this.registerControlHandlers();
     }
     get components() {
         return this.client.components;

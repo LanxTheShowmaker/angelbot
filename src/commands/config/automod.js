@@ -2,6 +2,7 @@ import { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ModalBu
 import { embeds } from "../../design/embeds.js";
 import { isStaff } from "../../core/services.js";
 import { logger } from "../../core/logger.js";
+const TOGGLE_KEYS = ["inviteFilter", "linkFilter", "newAccountFilter", "zalgoFilter", "scamUrlFilter", "clusterSpam", "autoLockdown"];
 const NUMERIC_KEYS = ["maxMentions", "spamThreshold", "spamWindowMs", "raidJoinThreshold", "raidWindowMs", "newAccountMaxAgeDays", "emojiSpamThreshold", "clusterSpamThreshold", "clusterSpamWindowMs"];
 const NUMERIC_LABELS = {
     maxMentions: "Max mentions",
@@ -106,7 +107,7 @@ export default {
             try {
                 const current = await client.services.settings.get(i.guildId);
                 const a = persisted(current);
-                if (action === "inviteFilter" || action === "linkFilter") {
+                if (TOGGLE_KEYS.includes(action)) {
                     const next = { ...a, [action]: !bool(a, action) };
                     await client.services.settings.patch(i.guildId, { automod: next }).catch((e) => logger.error("automod", "patch failed", e));
                     const updated = await client.services.settings.get(i.guildId);

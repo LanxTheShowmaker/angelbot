@@ -17,16 +17,20 @@ function roleOptions(guild) {
 
 function renderSetup(guild) {
     const sel = selections.get(guild.id) ?? { staff: [], mod: [] };
+    const staffOpts = roleOptions(guild);
+    const modOpts = roleOptions(guild);
+    if (!staffOpts.length)
+        staffOpts.push({ label: "No roles found", value: "none", description: "Create a role first" });
+    if (!modOpts.length)
+        modOpts.push({ label: "No roles found", value: "none", description: "Create a role first" });
     const staffMenu = new StringSelectMenuBuilder()
         .setCustomId("wings:setup:staff")
         .setPlaceholder("Select Staff role")
-        .addOptions(roleOptions(guild))
-        .setDefaultValues(sel.staff);
+        .addOptions(staffOpts);
     const modMenu = new StringSelectMenuBuilder()
         .setCustomId("wings:setup:mod")
         .setPlaceholder("Select Moderator role")
-        .addOptions(roleOptions(guild))
-        .setDefaultValues(sel.mod);
+        .addOptions(modOpts);
     const confirm = new ButtonBuilder()
         .setCustomId("wings:setup:confirm")
         .setLabel("Run setup")
@@ -108,7 +112,7 @@ export default {
             if (!i.isStringSelectMenu())
                 return;
             const sel = selections.get(i.guild.id) ?? { staff: [], mod: [] };
-            sel.staff = i.values;
+            sel.staff = i.values.filter((v) => v !== "none");
             selections.set(i.guild.id, sel);
             await i.update(renderSetup(i.guild)).catch(() => { });
         });
@@ -116,7 +120,7 @@ export default {
             if (!i.isStringSelectMenu())
                 return;
             const sel = selections.get(i.guild.id) ?? { staff: [], mod: [] };
-            sel.mod = i.values;
+            sel.mod = i.values.filter((v) => v !== "none");
             selections.set(i.guild.id, sel);
             await i.update(renderSetup(i.guild)).catch(() => { });
         });

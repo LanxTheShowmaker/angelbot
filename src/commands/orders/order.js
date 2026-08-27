@@ -40,13 +40,16 @@ export default {
         if (sub === "panel") {
             await interaction.deferReply({ ephemeral: true });
             const service = client.services.orders;
-            await interaction.channel.send({
-                embeds: [service.buildPanelEmbed()],
-                components: [service.buildOpenButton()],
-            }).catch((e) => {
+            try {
+                await interaction.channel.send({
+                    embeds: [service.buildPanelEmbed()],
+                    components: [service.buildOpenButton()],
+                });
+            }
+            catch (e) {
                 logger.error("orders", "panel send failed", e);
                 return interaction.editReply({ embeds: [embeds.error("Could not post panel", "I may be missing permission to send messages here.")] });
-            });
+            }
             return interaction.editReply({ embeds: [embeds.success("Panel posted", "The design-order panel was sent to this channel.")] });
         }
         if (sub === "list") {
