@@ -1,1 +1,0 @@
-{"version":3,"file":"automodJoin.js","sourceRoot":"","sources":["../../src/events/automodJoin.ts"],"names":[],"mappings":"AAGA,eAAe;IACb,IAAI,EAAE,gBAAgB;IACtB,KAAK,CAAC,OAAO,CAAC,MAAmB,EAAE,MAAmB;QACpD,MAAM,MAAM,CAAC,QAAQ,CAAC,OAAO,CAAC,UAAU,CAAC,MAAM,CAAC,CAAC,KAAK,CAAC,GAAG,EAAE,GAAE,CAAC,CAAC,CAAC;IACnE,CAAC;CACF,CAAC"}

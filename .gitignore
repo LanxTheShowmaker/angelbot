@@ -4,6 +4,7 @@ node_modules/
 !.env.example
 *.log
 dist/
+*.js.map
 prisma/dev.db
 prisma/dev.db-journal
 .DS_Store
