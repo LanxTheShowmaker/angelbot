@@ -47,32 +47,34 @@ async function buildStatusEmbed(guild, client) {
     const types = await client.prisma.ticketType.findMany({ where: { guildId: guild.id } }).catch(() => []);
     const countByPanel = (t) => types.filter((x) => x.panelType === t).length;
     const statusFor = (panel) => {
-        if (!panel.enabled) return "🟡 Not configured";
-        if (!panel.channelId || !panel.messageId) return "🟡 Partially configured";
+        if (!panel.enabled) return "◯  Not configured";
+        if (!panel.channelId || !panel.messageId) return "◐  Partial";
         const ch = guild.channels.cache.get(panel.channelId);
-        if (!ch) return "🔴 Channel missing";
-        return "🟢 Configured";
+        if (!ch) return "⬤  Missing";
+        return "⬤  Live";
     };
     const lines = [];
     for (const pt of Object.values(PANEL_TYPES)) {
         const p = panels.find((x) => x.panelType === pt);
         const label = pt === PANEL_TYPES.ORDER ? "Orders" : pt === PANEL_TYPES.ASSISTANCE ? "Assistance" : pt === PANEL_TYPES.REGULATIONS ? "Regulations" : "Dashboard";
         const emoji = pt === PANEL_TYPES.ORDER ? "🛒" : pt === PANEL_TYPES.ASSISTANCE ? "🛟" : pt === PANEL_TYPES.REGULATIONS ? "📜" : "📊";
-        const st = p ? statusFor(p) : "Not configured";
-        const extra = pt === PANEL_TYPES.ORDER || pt === PANEL_TYPES.ASSISTANCE ? `Types: ${countByPanel(pt)}` : pt === PANEL_TYPES.REGULATIONS ? `Sections: ${(() => { try { return JSON.parse(p?.config ?? "{}").sections?.length ?? 0; } catch { return 0; } })()}` : "";
-        lines.push(`${emoji} ${label} — ${st}${extra ? ` • ${extra}` : ""}`);
+        const st = p ? statusFor(p) : "◯  —";
+        const extra = pt === PANEL_TYPES.ORDER || pt === PANEL_TYPES.ASSISTANCE ? ` ${countByPanel(pt)} types` : pt === PANEL_TYPES.REGULATIONS ? ` ${(() => { try { return JSON.parse(p?.config ?? "{}").sections?.length ?? 0; } catch { return 0; } })()} sections` : "";
+        const chInfo = p?.channelId ? `<#${p.channelId}>` : "`—`";
+        lines.push(`${emoji}  **${label}**  ${st}  ·  ${chInfo}${extra ? `  ·  _${extra.trim()}_` : ""}`);
     }
-    // Ticket system status
     const ticketEnabled = panels.some((p) => p.enabled);
-    lines.push(`🎫 Tickets — ${ticketEnabled ? "🟢 Enabled" : "🔴 Disabled"}`);
-    // Transcripts status (check if any panel has transcript? For now check GuildConfig)
-    const cfg = await client.services.settings.get(guild.id).catch(() => null);
-    lines.push(`📄 Transcripts — ${cfg?.logChannelId ? "🟢 Enabled" : "🔴 Disabled"}`);
+    lines.push(`\n🎫  **Tickets**  ${ticketEnabled ? "⬤  Enabled" : "◯  Disabled"}     📄  **Transcripts**  ${(await client.services.settings.get(guild.id).catch(()=>null))?.logChannelId ? "⬤  Enabled" : "◯  Disabled"}`);
 
-    const embed = embeds.info("A.N.G.E.L. Ticket & Panel Manager", "Configure your server's public panels, ticket systems, and support infrastructure.\n\n**Panel Status**\n" + lines.join("\n"), [
-        { name: "Guild", value: guild.name, inline: true },
-        { name: "Panels", value: `${panels.filter((p) => p.enabled).length}/4 enabled`, inline: true },
-    ]);
+    const embed = embeds.panel("✦  A.N.G.E.L.  •  Ticket & Panel Manager", `*Craft your server's public face — panels, tickets, and support, woven with grace.*\n\n${lines.join("\n")}`, [
+        { name: "  Guild", value: `> **${guild.name}**`, inline: true },
+        { name: "  Panels", value: `> **${panels.filter((p) => p.enabled).length}/4** live`, inline: true },
+        { name: "  Tip", value: `> *Select a panel below to configure*`, inline: true },
+    ], {
+        author: { name: `A.N.G.E.L.  •  ${guild.name}`, iconURL: guild.iconURL({ size: 64 }) ?? undefined },
+        footer: `A.N.G.E.L.  •  heavenly service  •  ${new Date().toLocaleDateString()}`,
+    });
+    embed.setThumbnail(guild.iconURL({ size: 128 }) ?? null);
     return embed;
 }
 
@@ -100,26 +102,30 @@ function dashboardComponents() {
 async function panelEditorEmbed(guild, panelType, client) {
     const panel = await client.services.panels.get(guild.id, panelType);
     const cfg = panel.parsedConfig ?? {};
-    const bannerStatus = panel.bannerUrl ? `✅ Set` : "— Not set";
+    const bannerStatus = panel.bannerUrl ? "⬤  Set  •  preview below" : "◯  Not set";
     const channel = panel.channelId ? guild.channels.cache.get(panel.channelId) : null;
     const types = panelType === PANEL_TYPES.ORDER || panelType === PANEL_TYPES.ASSISTANCE ? await client.prisma.ticketType.findMany({ where: { guildId: guild.id, panelType } }).catch(() => []) : [];
     const meta = {
-        [PANEL_TYPES.ORDER]: { title: "Orders Panel", emoji: "🛒" },
-        [PANEL_TYPES.ASSISTANCE]: { title: "Assistance Panel", emoji: "🛟" },
-        [PANEL_TYPES.REGULATIONS]: { title: "Regulations Panel", emoji: "📜" },
-        [PANEL_TYPES.DASHBOARD]: { title: "Dashboard Panel", emoji: "📊" },
+        [PANEL_TYPES.ORDER]: { title: "Orders", emoji: "🛒", desc: "Your storefront — where commissions begin" },
+        [PANEL_TYPES.ASSISTANCE]: { title: "Assistance", emoji: "🛟", desc: "A haven for support and care" },
+        [PANEL_TYPES.REGULATIONS]: { title: "Regulations", emoji: "📜", desc: "Your covenant of safety" },
+        [PANEL_TYPES.DASHBOARD]: { title: "Dashboard", emoji: "📊", desc: "Your community's front door" },
     }[panelType];
-    const embed = embeds.info(`${meta.emoji} ${meta.title}`, `Configure **${meta.title}** for this server.`, [
-        { name: "Enabled", value: panel.enabled ? "🟢 Yes" : "🔴 No", inline: true },
-        { name: "Channel", value: channel ? `<#${channel.id}>` : "Not set", inline: true },
-        { name: "Message", value: panel.messageId ? "`Deployed`" : "Not deployed", inline: true },
-        { name: "Title", value: panel.title ?? cfg.title ?? "—", inline: true },
-        { name: "Banner", value: bannerStatus, inline: true },
-        { name: "Footer", value: panel.footerText ?? cfg.footerText ?? "—", inline: true },
-        ...(panelType === PANEL_TYPES.REGULATIONS ? [{ name: "Sections", value: `${(cfg.sections ?? []).length} sections` }] : []),
-        ...(types.length ? [{ name: "Ticket Types", value: `${types.length} configured` }] : []),
-    ]);
+    const embed = embeds.panel(`✦  ${meta.emoji}  ${meta.title}`, `*${meta.desc}*\nConfigure this panel for **${guild.name}**.`, [
+        { name: "  State", value: panel.enabled ? "```diff\n+ Live\n```" : "```diff\n- Disabled\n```", inline: true },
+        { name: "  Channel", value: channel ? `<#${channel.id}>` : "`—  Not set`", inline: true },
+        { name: "  Message", value: panel.messageId ? "`⬤  Deployed`" : "`◯  Awaiting deploy`", inline: true },
+        { name: "  Title", value: `> ${panel.title ?? cfg.title ?? "—"}`, inline: false },
+        { name: "  Banner", value: bannerStatus, inline: true },
+        { name: "  Footer", value: `> ${(panel.footerText ?? cfg.footerText ?? "—").slice(0,100)}`, inline: true },
+        ...(panelType === PANEL_TYPES.REGULATIONS ? [{ name: "  Sections", value: `> **${(cfg.sections ?? []).length}** sections`, inline: true }] : []),
+        ...(types.length ? [{ name: "  Ticket Types", value: `> **${types.length}** configured`, inline: true }] : []),
+    ], {
+        author: { name: `A.N.G.E.L.  •  ${meta.title}`, iconURL: guild.iconURL({ size:64 }) ?? undefined },
+        footer: `A.N.G.E.L.  •  ${panelType}  •  heavenly service`,
+    });
     if (panel.bannerUrl) embed.setImage(panel.bannerUrl);
+    embed.setThumbnail(guild.iconURL({ size:128 }) ?? null);
     return embed;
 }
 

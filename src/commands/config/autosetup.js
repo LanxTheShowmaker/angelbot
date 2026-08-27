@@ -347,21 +347,22 @@ function renderSetup(guild) {
 
     const staffMenu = new StringSelectMenuBuilder()
         .setCustomId("wings:setup:staff")
-        .setPlaceholder("Select Staff role")
+        .setPlaceholder("✦  Select Staff role")
         .addOptions(staffOpts);
     const modMenu = new StringSelectMenuBuilder()
         .setCustomId("wings:setup:mod")
-        .setPlaceholder("Select Moderator role")
+        .setPlaceholder("✦  Select Moderator role")
         .addOptions(modOpts);
 
     const toggle = new ButtonBuilder()
         .setCustomId("wings:setup:toggleCreate")
-        .setLabel(`Create missing roles: ${sel.createMissing ? "On" : "Off"}`)
+        .setLabel(`Create missing: ${sel.createMissing ? "On" : "Off"}`)
+        .setEmoji(sel.createMissing ? "🌱" : "🌿")
         .setStyle(sel.createMissing ? ButtonStyle.Success : ButtonStyle.Secondary);
 
-    const previewBtn = new ButtonBuilder().setCustomId("wings:setup:preview").setLabel("Preview setup").setStyle(ButtonStyle.Secondary);
-    const repairBtn = new ButtonBuilder().setCustomId("wings:setup:repair").setLabel("Repair setup").setStyle(ButtonStyle.Secondary);
-    const confirm = new ButtonBuilder().setCustomId("wings:setup:confirm").setLabel("Run setup").setStyle(ButtonStyle.Primary);
+    const previewBtn = new ButtonBuilder().setCustomId("wings:setup:preview").setLabel("Preview").setStyle(ButtonStyle.Secondary).setEmoji("👁️");
+    const repairBtn = new ButtonBuilder().setCustomId("wings:setup:repair").setLabel("Repair").setStyle(ButtonStyle.Secondary).setEmoji("🔧");
+    const confirm = new ButtonBuilder().setCustomId("wings:setup:confirm").setLabel("Run Setup  •  Build").setStyle(ButtonStyle.Success).setEmoji("✨");
 
     // Detection summary (sync quick check)
     const detectedStaff = detectStaffRole(guild);
@@ -373,23 +374,27 @@ function renderSetup(guild) {
     const ordersCat = findMatchingCategory(guild, ORDERS_CATEGORY_CANDIDATES);
 
     const perms = validateSetupPermissions(guild);
-    const permWarnings = perms.warnings.length ? perms.warnings.join(", ") : "All required permissions OK";
+    const permWarnings = perms.warnings.length ? perms.warnings.map((w) => `> ⚠  ${w}`).join("\n") : "> ⬤  All permissions granted  •  ready to build";
 
-    const embed = embeds.info("A.N.G.E.L. Auto-setup", "Pick **Staff** and **Moderator** roles — detected roles are preselected. Toggle **Create missing roles** if you want A.N.G.E.L. to create `Server staff` / `Server Moderator` when none exist. Use **Preview** to see what would happen.", [
-        { name: "Staff", value: sel.staff.length ? sel.staff.map((id) => `<@&${id}>`).join(", ") : detectedStaff ? `Detected: <@&${detectedStaff.id}>` : "— (select one)", inline: true },
-        { name: "Moderator", value: sel.mod.length ? sel.mod.map((id) => `<@&${id}>`).join(", ") : detectedMod ? `Detected: <@&${detectedMod.id}>` : "— (select one)", inline: true },
-        { name: "Create missing roles", value: sel.createMissing ? "On — will create `Server staff` / `Server Moderator` if missing" : "Off", inline: true },
-        { name: "Channels", value: [
-            logsCh ? `✓ Logs: <#${logsCh.id}>` : `* Create #${NEW_LOG_CHANNEL}`,
-            modlogCh ? `✓ Mod-log: <#${modlogCh.id}>` : `* Create #${NEW_MODLOG_CHANNEL}`,
-            welcomeCh ? `✓ Welcome: <#${welcomeCh.id}>` : `* Create #${NEW_WELCOME_CHANNEL}`,
+    const embed = embeds.panel("✦  A.N.G.E.L.  •  Auto-setup", "*Craft your server's foundation — roles, channels, and grace, in one flow.*\nPick **Staff** and **Moderator** roles below. Detected roles are preselected. Toggle **Create missing roles** to let A.N.G.E.L. create `Server staff` / `Server Moderator` when none exist.\n\n*Preview first — then Run.*", [
+        { name: "  Staff", value: sel.staff.length ? sel.staff.map((id) => `<@&${id}>`).join(", ") : detectedStaff ? `> Detected: <@&${detectedStaff.id}>\n> _Tap to change_` : "> —  _select one_", inline: true },
+        { name: "  Moderator", value: sel.mod.length ? sel.mod.map((id) => `<@&${id}>`).join(", ") : detectedMod ? `> Detected: <@&${detectedMod.id}>\n> _Tap to change_` : "> —  _select one_", inline: true },
+        { name: "  Create missing", value: sel.createMissing ? "```diff\n+ On  —  will create Server staff / Moderator if missing\n```" : "```diff\n- Off\n```", inline: true },
+        { name: "  Channels", value: [
+            logsCh ? `> ⬤  Logs  —  <#${logsCh.id}>` : `> ◯  Logs  —  \`#${NEW_LOG_CHANNEL}\`  *will create*`,
+            modlogCh ? `> ⬤  Mod-log  —  <#${modlogCh.id}>` : `> ◯  Mod-log  —  \`#${NEW_MODLOG_CHANNEL}\`  *will create*`,
+            welcomeCh ? `> ⬤  Welcome  —  <#${welcomeCh.id}>` : `> ◯  Welcome  —  \`#${NEW_WELCOME_CHANNEL}\`  *will create*`,
         ].join("\n"), inline: false },
-        { name: "Categories", value: [
-            logsCat ? `✓ ${logsCat.name}` : `* Create ${NEW_LOGS_CATEGORY}`,
-            ordersCat ? `✓ ${ordersCat.name}` : `* Create ${NEW_ORDERS_CATEGORY}`,
+        { name: "  Categories", value: [
+            logsCat ? `> ⬤  ${logsCat.name}` : `> ◯  ${NEW_LOGS_CATEGORY}  *will create*`,
+            ordersCat ? `> ⬤  ${ordersCat.name}` : `> ◯  ${NEW_ORDERS_CATEGORY}  *will create*`,
         ].join("\n"), inline: true },
-        { name: "Permissions", value: permWarnings, inline: false },
-    ]);
+        { name: "  Permissions", value: permWarnings, inline: false },
+    ], {
+        author: { name: `A.N.G.E.L.  •  ${guild.name}`, iconURL: guild.iconURL({ size: 64 }) ?? undefined },
+        footer: `A.N.G.E.L.  •  intelligent setup  •  ${guild.memberCount} members`,
+    });
+    embed.setThumbnail(guild.iconURL({ size: 128 }) ?? null);
 
     return {
         embeds: [embed],
@@ -403,25 +408,29 @@ function renderSetup(guild) {
 }
 
 function renderPreview(guild, plan) {
-    const embed = embeds.info("A.N.G.E.L. AUTO-SETUP PREVIEW", "No changes have been made. Review below then return to run.", [
-        { name: "Roles", value: [
-            plan.roles.staff.action==="reuse" ? `✓ Reuse <@&${plan.roles.staff.roleId}>` : plan.roles.staff.action==="create" ? `* Create \`${plan.roles.staff.name}\`` : plan.roles.staff.action==="repair" ? `↻ Repair <@&${plan.roles.staff.roleId}>` : `— Staff: ${plan.roles.staff.reason||"skip"}`,
-            plan.roles.mod.action==="reuse" ? `✓ Reuse <@&${plan.roles.mod.roleId}>` : plan.roles.mod.action==="create" ? `* Create \`${plan.roles.mod.name}\`` : plan.roles.mod.action==="repair" ? `↻ Repair <@&${plan.roles.mod.roleId}>` : `— Mod: ${plan.roles.mod.reason||"skip"}`,
+    const embed = embeds.panel("✦  Preview  •  A.N.G.E.L. Auto-setup", "*No changes have been made yet — this is a dry run.*\nReview what will be **reused**, **created**, and **repaired**, then return to build.", [
+        { name: "  Roles", value: [
+            plan.roles.staff.action==="reuse" ? `> ⬤  Reuse  <@&${plan.roles.staff.roleId}>` : plan.roles.staff.action==="create" ? `> ◯  Create  \`${plan.roles.staff.name}\`` : plan.roles.staff.action==="repair" ? `> ↻  Repair  <@&${plan.roles.staff.roleId}>` : `> —  Staff: *${plan.roles.staff.reason||"skip"}*`,
+            plan.roles.mod.action==="reuse" ? `> ⬤  Reuse  <@&${plan.roles.mod.roleId}>` : plan.roles.mod.action==="create" ? `> ◯  Create  \`${plan.roles.mod.name}\`` : plan.roles.mod.action==="repair" ? `> ↻  Repair  <@&${plan.roles.mod.roleId}>` : `> —  Mod: *${plan.roles.mod.reason||"skip"}*`,
         ].join("\n"), inline: false },
-        { name: "Channels", value: [
-            plan.channels.log.action==="reuse" ? `✓ Reuse <#${plan.channels.log.id}>` : plan.channels.log.action==="repair" ? `↻ Repair <#${plan.channels.log.id}>` : plan.channels.log.action==="create" ? `* Create #${plan.channels.log.name}` : `— Logs: blocked`,
-            plan.channels.modLog.action==="reuse" ? `✓ Reuse <#${plan.channels.modLog.id}>` : plan.channels.modLog.action==="repair" ? `↻ Repair <#${plan.channels.modLog.id}>` : plan.channels.modLog.action==="create" ? `* Create #${plan.channels.modLog.name}` : `— Mod-log: blocked`,
-            plan.channels.welcome.action==="reuse" ? `✓ Reuse <#${plan.channels.welcome.id}>` : plan.channels.welcome.action==="create" ? `* Create #${plan.channels.welcome.name}` : `— Welcome: blocked`,
+        { name: "  Channels", value: [
+            plan.channels.log.action==="reuse" ? `> ⬤  Reuse  <#${plan.channels.log.id}>` : plan.channels.log.action==="repair" ? `> ↻  Repair  <#${plan.channels.log.id}>` : plan.channels.log.action==="create" ? `> ◯  Create  \`#${plan.channels.log.name}\`` : `> —  Logs: *blocked*`,
+            plan.channels.modLog.action==="reuse" ? `> ⬤  Reuse  <#${plan.channels.modLog.id}>` : plan.channels.modLog.action==="repair" ? `> ↻  Repair  <#${plan.channels.modLog.id}>` : plan.channels.modLog.action==="create" ? `> ◯  Create  \`#${plan.channels.modLog.name}\`` : `> —  Mod-log: *blocked*`,
+            plan.channels.welcome.action==="reuse" ? `> ⬤  Reuse  <#${plan.channels.welcome.id}>` : plan.channels.welcome.action==="create" ? `> ◯  Create  \`#${plan.channels.welcome.name}\`` : `> —  Welcome: *blocked*`,
         ].join("\n"), inline: false },
-        { name: "Categories", value: [
-            plan.categories.logs.action==="reuse" ? `✓ Reuse ${plan.categories.logs.name}` : plan.categories.logs.action==="create" ? `* Create ${plan.categories.logs.name}` : `— Logs cat: blocked`,
-            plan.categories.orders.action==="reuse" ? `✓ Reuse ${plan.categories.orders.name}` : plan.categories.orders.action==="create" ? `* Create ${plan.categories.orders.name}` : `— Orders cat: blocked`,
+        { name: "  Categories", value: [
+            plan.categories.logs.action==="reuse" ? `> ⬤  Reuse  \`${plan.categories.logs.name}\`` : plan.categories.logs.action==="create" ? `> ◯  Create  \`${plan.categories.logs.name}\`` : `> —  Logs cat: *blocked*`,
+            plan.categories.orders.action==="reuse" ? `> ⬤  Reuse  \`${plan.categories.orders.name}\`` : plan.categories.orders.action==="create" ? `> ◯  Create  \`${plan.categories.orders.name}\`` : `> —  Orders cat: *blocked*`,
         ].join("\n"), inline: false },
-        { name: "Configuration", value: "✓ Guild configuration will be updated", inline: false },
-        ...(plan.permissions.warnings.length ? [{ name: "Warnings", value: plan.permissions.warnings.join("\n") }] : []),
-        ...(plan.hierarchy && !plan.hierarchy.ok ? [{ name: "Hierarchy", value: plan.hierarchy.problems.map((p)=>p.reason).join("\n") }] : []),
-    ]);
-    const back = new ButtonBuilder().setCustomId("wings:setup:back").setLabel("Back").setStyle(ButtonStyle.Secondary);
+        { name: "  Configuration", value: "> ⬤  Guild configuration will be updated", inline: false },
+        ...(plan.permissions.warnings.length ? [{ name: "  Warnings", value: plan.permissions.warnings.map((w)=>`> ⚠  ${w}`).join("\n") }] : []),
+        ...(plan.hierarchy && !plan.hierarchy.ok ? [{ name: "  Hierarchy", value: plan.hierarchy.problems.map((p)=>`> ⚠  ${p.reason}`).join("\n") }] : []),
+    ], {
+        author: { name: `A.N.G.E.L.  •  Preview`, iconURL: guild.iconURL({ size: 64 }) ?? undefined },
+        footer: `A.N.G.E.L.  •  preview  •  no changes made`,
+    });
+    embed.setThumbnail(guild.iconURL({ size: 128 }) ?? null);
+    const back = new ButtonBuilder().setCustomId("wings:setup:back").setLabel("Back  •  Return").setStyle(ButtonStyle.Secondary).setEmoji("↩️");
     return { embeds: [embed], components: [new ActionRowBuilder().addComponents(back)] };
 }
 

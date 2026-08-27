@@ -19,55 +19,58 @@ const PANEL_META = {
 
 const DEFAULT_PANELS = {
     [PANEL_TYPES.ORDER]: {
-        title: "🪽 Place Your Order",
-        description: "Welcome to **A.N.G.E.L.** — choose a service from the dropdown to open a private order ticket.",
+        title: "✦  Place Your Order",
+        description: "Welcome to **A.N.G.E.L.** — your atelier for bespoke design.\nEvery creation is crafted with care, clarity, and grace.\n\nChoose a service below to open a private ticket. Our designers will guide you from brief to delivery.",
         bannerUrl: null,
         thumbnailUrl: null,
         embedColor: null,
-        footerText: "A.N.G.E.L. • Select an option below to begin",
+        footerText: "A.N.G.E.L.  •  select an option below to begin  •  one ticket per request",
         footerIcon: null,
         sections: [
-            { title: "What Happens Next", content: "1. Choose a service from the menu\n2. Fill the brief (references, budget, deadline)\n3. A designer will claim your ticket and start" },
-            { title: "📌 Note", content: "Provide clear references, respect payment rules, and follow staff instructions. One ticket per request." },
+            { title: "What Happens Next", content: "```\n1 — Choose a service from the menu\n2 — Share your vision (references, budget, deadline)\n3 — A designer claims your ticket and begins\n```" },
+            { title: "Before You Order  •  Please Read", content: "> Provide clear references and dimensions\n> Respect payment and revision rules\n> Follow staff guidance with kindness\n> Need help? Open an Assistance ticket" },
         ],
-        dropdownPlaceholder: "Choose a service to order",
+        dropdownPlaceholder: "🪽  Choose a service to begin",
     },
     [PANEL_TYPES.ASSISTANCE]: {
-        title: "🛟 A.N.G.E.L. Assistance Requests",
-        description: "Need help? Open a private support ticket and our staff will assist you.",
+        title: "🛟  Assistance  •  We're Here to Help",
+        description: "Need guidance, have a concern, or wish to join our team?\nOpen a private ticket — every request is handled with care and confidentiality.",
         bannerUrl: null,
         sections: [
-            { title: "Submitting a Request", content: "Clearly explain your issue, provide relevant proof/screenshots, and include your user ID if reporting." },
-            { title: "Review Process", content: "Staff will review your request within 24h and respond in the ticket." },
+            { title: "Submitting a Request", content: "> Clearly explain your situation\n> Provide proof, screenshots, or IDs where relevant\n> One request per ticket — be concise and kind" },
+            { title: "Review Process", content: "> Staff review within 24 hours\n> You'll be updated directly in the ticket\n> Urgent matters are prioritized with grace" },
         ],
-        dropdownPlaceholder: "Choose a request",
+        dropdownPlaceholder: "🛟  Choose a request",
+        footerText: "A.N.G.E.L.  •  private and confidential",
     },
     [PANEL_TYPES.REGULATIONS]: {
-        title: "📜 A.N.G.E.L. Regulations",
-        description: "Please read and follow these server rules.",
+        title: "📜  Regulations  •  Our Covenant",
+        description: "*To keep our community safe, inspiring, and fair — please honour these principles.*",
         bannerUrl: null,
-        subtitle: null,
+        subtitle: "Grace • Respect • Integrity",
         sections: [
-            { title: "Essentials", content: "• Remain respectful and professional\n• Follow staff instructions\n• Do not impersonate others\n• Do not scam users\n• Do not interfere with another person's transaction\n• Follow Discord Terms of Service" },
+            { title: "Essentials  —  The Foundation", content: "```\n•  Remain respectful and professional at all times\n•  Follow staff guidance with grace\n•  Never impersonate others or misrepresent work\n•  Scamming, fraud, or deceptive practices are forbidden\n•  Do not interfere with another's transaction or order\n•  Honour Discord Terms of Service and community spirit\n```" },
+            { title: "Craft & Conduct", content: "> Customer — Be clear, patient, and appreciative of the creative process\n> Designer — Deliver with integrity, communicate, respect deadlines\n> Staff — Serve with fairness, transparency, and kindness\n>AI — Disclose AI assistance where relevant, originality is cherished" },
         ],
-        footerText: "A.N.G.E.L. • Regulations are enforced by staff",
+        footerText: "A.N.G.E.L.  •  regulations live in respect",
     },
     [PANEL_TYPES.DASHBOARD]: {
-        title: "📊 A.N.G.E.L. Dashboard",
-        description: "Welcome to our community — your hub for services, staff, and info.",
+        title: "✦  A.N.G.E.L. Dashboard",
+        description: "**Your gateway to our world.**\nA curated space for discovery — our story, our craft, and our community.\n\n*Open an Order or Assistance ticket to begin your journey.*",
         bannerUrl: null,
         sections: [
-            { title: "Community", content: "We provide design, development, and support services." },
-            { title: "Purpose", content: "Open a ticket via the Orders or Assistance panels to get started." },
+            { title: "Our Community", content: "> A sanctuary for creators, dreamers, and patrons.\n> Design, development, and heartfelt support — woven together with care." },
+            { title: "Our Purpose", content: "> To craft beauty that endures, to serve with grace, and to grow together.\n> Every ticket is a promise — we honour it." },
         ],
-        dropdownPlaceholder: "More Information",
+        dropdownPlaceholder: "✦  Explore more",
         dropdownOptions: [
-            { label: "About", value: "about", emoji: "📖", description: "About the server" },
-            { label: "Services", value: "services", emoji: "🛒", description: "Our services" },
-            { label: "Staff", value: "staff", emoji: "👥", description: "Meet the team" },
-            { label: "Links", value: "links", emoji: "🔗", description: "Important links" },
-            { label: "Regulations", value: "regulations", emoji: "📜", description: "Server rules" },
+            { label: "About", value: "about", emoji: "📖", description: "Our story and values" },
+            { label: "Services", value: "services", emoji: "🛒", description: "What we create" },
+            { label: "Atelier", value: "staff", emoji: "👥", description: "Meet the artisans" },
+            { label: "Connect", value: "links", emoji: "🔗", description: "Links & contact" },
+            { label: "Regulations", value: "regulations", emoji: "📜", description: "Our covenant" },
         ],
+        footerText: "A.N.G.E.L.  •  welcome home",
     },
 };
 
@@ -138,22 +141,40 @@ export class PanelService {
         return null;
     }
 
-    // Renderer
+    // Renderer — aesthetic, restrained, heavenly
     buildPanelEmbed(panel, ticketTypes = []) {
         const cfg = panel.parsedConfig ?? (panel.config ? JSON.parse(panel.config) : {}) ?? {};
         const title = panel.title ?? cfg.title ?? PANEL_META[panel.panelType]?.defaultTitle ?? panel.panelType;
-        const description = panel.description ?? cfg.description ?? "";
-        const color = panel.embedColor ?? cfg.embedColor ?? Theme.accent;
+        let description = panel.description ?? cfg.description ?? "";
+        // Add subtle instruction for order/assistance if dropdown exists
+        if ([PANEL_TYPES.ORDER, PANEL_TYPES.ASSISTANCE].includes(panel.panelType)) {
+            const hasOptions = (ticketTypes && ticketTypes.length) || this.getFallbackTicketTypes(panel.panelType).length;
+            if (hasOptions && !description.includes("Select an option")) {
+                description = description ? `${description}\n\n*— Select an option below to begin —*` : `*Select an option below to begin*`;
+            }
+        }
+        const color = panel.embedColor ?? cfg.embedColor ?? Theme.panel;
         const sections = cfg.sections ?? [];
-        const fields = sections.map((s) => ({ name: s.title ?? "Section", value: s.content ?? s.rules?.join("\n") ?? "—" })).slice(0, 25);
-        // Truncate fields to 1024
-        for (const f of fields) if (f.value.length > 1024) f.value = f.value.slice(0, 1021) + "...";
-        const embed = embeds.info(title, description || undefined, fields.length ? fields : undefined);
+        // Build fields with airy spacing — keep titles short, content breathable
+        const fields = sections.map((s) => {
+            const name = (s.title ?? "—").trim();
+            let value = (s.content ?? s.rules?.join("\n") ?? "—").trim();
+            if (value.length > 1024) value = value.slice(0, 1021) + "…";
+            // Ensure bullet lists are not cramped
+            return { name: ` ${name}`, value, inline: false };
+        }).slice(0, 25);
+
+        const guildName = panel.guildId ? `A.N.G.E.L. • ${PANEL_META[panel.panelType]?.label ?? panel.panelType}` : "A.N.G.E.L.";
+        const embed = embeds.panel(title, description || undefined, fields.length ? fields : undefined, {
+            author: { name: guildName },
+            footer: panel.footerText ?? cfg.footerText ?? "A.N.G.E.L.  •  crafted with grace",
+            footerIcon: panel.footerIcon ?? cfg.footerIcon ?? undefined,
+        });
         if (color) embed.setColor(color);
-        if (panel.bannerUrl) embed.setImage(panel.bannerUrl);
-        else if (cfg.bannerUrl) embed.setImage(cfg.bannerUrl);
+        // Banner — large, cinematic
+        const banner = panel.bannerUrl ?? cfg.bannerUrl ?? null;
+        if (banner) embed.setImage(banner);
         if (panel.thumbnailUrl || cfg.thumbnailUrl) embed.setThumbnail(panel.thumbnailUrl ?? cfg.thumbnailUrl);
-        if (panel.footerText || cfg.footerText) embed.setFooter({ text: panel.footerText ?? cfg.footerText, iconURL: panel.footerIcon ?? cfg.footerIcon ?? undefined });
         return embed;
     }
 

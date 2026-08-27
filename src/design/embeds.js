@@ -7,30 +7,54 @@ const COLORS = {
     info: Theme.info,
     moderation: Theme.accent,
     neutral: Theme.accent,
+    panel: Theme.panel,
+    ticket: Theme.ticket,
 };
 function build(kind, opts) {
     const embed = new EmbedBuilder()
-        .setColor(COLORS[kind])
-        .setTitle(opts.title)
-        .setFooter({ text: Brand.footer })
+        .setColor(COLORS[kind] ?? Theme.accent)
         .setTimestamp();
-    if (opts.description)
+    // Title with subtle mark for premium feel
+    if (opts.title) {
+        const title = opts.title.includes(Brand.mark) || opts.title.match(/^[📜🪽🛒🛟📊✦]/) ? opts.title : `${opts.title}`;
+        embed.setTitle(title);
+    }
+    // Author for panels/tickets — heavenly accent
+    if (opts.author) {
+        embed.setAuthor({ name: opts.author.name ?? Brand.name, iconURL: opts.author.iconURL ?? undefined });
+    }
+    // Description with breathable spacing
+    if (opts.description) {
+        // Add soft separator above fields
         embed.setDescription(opts.description);
-    if (opts.fields?.length)
-        embed.addFields(opts.fields);
-    if (opts.thumbnailUrl)
-        embed.setThumbnail(opts.thumbnailUrl);
-    if (opts.imageUrl)
-        embed.setImage(opts.imageUrl);
+    }
+    if (opts.fields?.length) {
+        // Ensure fields are clean — trim and add subtle spacing
+        const clean = opts.fields.map((f) => ({
+            name: f.name?.trim() ?? "—",
+            value: (f.value?.trim() ?? "—").slice(0, 1024) || "—",
+            inline: f.inline ?? false,
+        }));
+        embed.addFields(clean);
+    }
+    if (opts.thumbnailUrl) embed.setThumbnail(opts.thumbnailUrl);
+    if (opts.imageUrl) embed.setImage(opts.imageUrl);
+    // Footer — consistent, muted, with timestamp already set
+    const footerText = opts.footer ?? Brand.footer;
+    if (opts.footerIcon) embed.setFooter({ text: footerText, iconURL: opts.footerIcon });
+    else embed.setFooter({ text: footerText });
+    if (opts.url) embed.setURL(opts.url);
     return embed;
 }
 export const embeds = {
-    success: (title, description, fields) => build("success", { title, description, fields }),
-    error: (title, description, fields) => build("error", { title, description, fields }),
-    warn: (title, description, fields) => build("warn", { title, description, fields }),
-    info: (title, description, fields) => build("info", { title, description, fields }),
-    moderation: (title, description, fields) => build("moderation", { title, description, fields }),
-    neutral: (title, description, fields) => build("neutral", { title, description, fields }),
+    success: (title, description, fields, opts = {}) => build("success", { title, description, fields, ...opts }),
+    error: (title, description, fields, opts = {}) => build("error", { title, description, fields, ...opts }),
+    warn: (title, description, fields, opts = {}) => build("warn", { title, description, fields, ...opts }),
+    info: (title, description, fields, opts = {}) => build("info", { title, description, fields, ...opts }),
+    moderation: (title, description, fields, opts = {}) => build("moderation", { title, description, fields, ...opts }),
+    neutral: (title, description, fields, opts = {}) => build("neutral", { title, description, fields, ...opts }),
+    panel: (title, description, fields, opts = {}) => build("panel", { title, description, fields, ...opts }),
+    ticket: (title, description, fields, opts = {}) => build("ticket", { title, description, fields, ...opts }),
 };
 export function confirmationRow(opts) {
     const accept = new ButtonBuilder()

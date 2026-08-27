@@ -220,21 +220,28 @@ export class TicketSystemService {
         // Cooldown set
         if (type.cooldown) this.cooldowns.set(`${guild.id}:${member.id}:${type.key}`, Date.now());
 
-        // Welcome embed
+        // Welcome embed — heavenly, calm, premium
         const fields = [
-            { name: "Creator", value: `<@${member.id}>`, inline: true },
-            { name: "Service", value: `${type.emoji ?? ""} ${type.displayName}`, inline: true },
-            { name: "Status", value: `🟡 ${status}`, inline: true },
-            { name: "Priority", value: type.priority ?? "NORMAL", inline: true },
-            { name: "Created", value: `<t:${Math.floor(Date.now()/1000)}:R>`, inline: true },
+            { name: "  Creator", value: `<@${member.id}>`, inline: true },
+            { name: "  Service", value: `${type.emoji ?? "✦"}  ${type.displayName}`, inline: true },
+            { name: "  Status", value: `🟡  ${status}`, inline: true },
+            { name: "  Priority", value: `◆  ${type.priority ?? "NORMAL"}`, inline: true },
+            { name: "  Opened", value: `<t:${Math.floor(Date.now()/1000)}:R>`, inline: true },
         ];
         if (answers.length) {
-            for (const a of answers) fields.push({ name: a.question.slice(0,256), value: a.answer.slice(0,1024) || "—" });
+            fields.push({ name: " ─  Required Information", value: " ", inline: false });
+            for (const a of answers) fields.push({ name: `  ${a.question.slice(0, 80)}`, value: `> ${a.answer.slice(0, 1024) || "—"}`, inline: false });
         }
-        if (type.instructions) fields.push({ name: "Instructions", value: type.instructions.slice(0,1024) });
-        const welcome = embeds.info(`${type.emoji ?? "🎫"} New Ticket — ${type.displayName}`, type.welcomeMessage ?? `Hello <@${member.id}>, staff will assist you shortly.`, fields);
+        if (type.instructions) fields.push({ name: "  Instructions", value: type.instructions.slice(0, 1024), inline: false });
+        else fields.push({ name: "  Next Steps", value: `> A staff member will claim this ticket shortly.\n> Please remain patient and provide any additional details.`, inline: false });
+
+        const welcome = embeds.ticket(`${type.emoji ?? "✦"}  New Ticket  •  ${type.displayName}`, type.welcomeMessage ?? `Hello <@${member.id}> — welcome to your private ticket.\nOur team will assist you with grace.`, fields, {
+            author: { name: `A.N.G.E.L. • ${type.displayName}`, iconURL: guild.iconURL({ size: 128 }) ?? undefined },
+            footer: `A.N.G.E.L.  •  ticket opened  •  ${member.user.tag}`,
+        });
         if (type.bannerUrl) welcome.setImage(type.bannerUrl);
-        welcome.setColor(Theme.accent);
+        else welcome.setThumbnail(member.user.displayAvatarURL({ size: 128 }));
+        welcome.setColor(Theme.ticket);
 
         const row1 = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId(`angel:ticket:claim:${channel.id}`).setLabel("Claim").setStyle(ButtonStyle.Success).setEmoji("🛠️"),
