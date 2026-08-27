@@ -5,7 +5,9 @@
   "type": "module",
   "main": "src/core/bootstrap.js",
   "scripts": {
-    "start": "node src/core/bootstrap.js",
+    "start": "node --max-old-space-size=256 --enable-source-maps src/core/bootstrap.js",
+    "start:lite": "node --max-old-space-size=224 --optimize-for-size src/core/bootstrap.js",
+    "start:index": "node --max-old-space-size=256 index.js",
     "dev": "node --watch src/core/bootstrap.js",
     "deploy": "node src/core/deploy.js",
     "prisma:generate": "prisma generate",
