@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GuildConfig {
+  guildId          String   @id
+  logChannelId     String?
+  modLogChannelId  String?
+  welcomeChannelId String?
+  goodbyeChannelId String?
+  staffRoleIds     String[] @default([])
+  moderatorRoleIds String[] @default([])
+  ignoredChannelIds String[] @default([])
+  ignoredRoleIds   String[] @default([])
+  ignoredUserIds   String[] @default([])
+  modules          Json     @default("{}")
+  automod          Json     @default("{}")
+  prefix           String   @default("!")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Case {
+  id           Int      @id @default(autoincrement())
+  guildId      String
+  caseNumber   Int
+  targetId     String
+  targetTag    String
+  moderatorId  String
+  moderatorTag String
+  action       String
+  reason       String?
+  duration     String?
+  durationMs   BigInt?
+  resolved     Boolean  @default(false)
+  resolvedById String?
+  resolvedByTag String?
+  resolvedAt   DateTime?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@unique([guildId, caseNumber])
+  @@index([guildId, targetId])
+}
+
+model Ticket {
+  id         String   @id @default(uuid())
+  guildId    String
+  channelId  String   @unique
+  openerId   String
+  claimedById String?
+  category   String?
+  status     String   @default("OPEN")
+  createdAt  DateTime @default(now())
+  closedAt   DateTime?
+  transcript String?
+}
+
+model Reminder {
+  id        String   @id @default(uuid())
+  guildId   String
+  channelId String
+  userId    String
+  message   String
+  remindAt  DateTime
+  createdAt DateTime @default(now())
+  @@index([remindAt])
+}
+
+model Poll {
+  id        String   @id @default(uuid())
+  guildId   String
+  channelId String
+  messageId String   @unique
+  authorId  String
+  question  String
+  options   Json
+  endsAt    DateTime?
+  createdAt DateTime @default(now())
+}

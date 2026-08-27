@@ -1,0 +1,91 @@
+# WINGS
+
+A bespoke, premium Discord application built for a single private server. WINGS is designed to feel intentional: consistent visual language, fast slash commands, a unified case system for moderation, structured logging, and graceful failure handling.
+
+## Principles
+
+- Slash-first. Components (buttons, selects, modals) are used only when they improve usability.
+- Every response follows one design system (`src/design`).
+- Sensible confirmation for destructive actions; ephemeral by default for moderation.
+- No raw Discord/DB errors reach ordinary users.
+- Persistent state lives in Postgres via Prisma — never scattered JSON.
+
+## Stack
+
+- TypeScript (ESM), run with `tsx`
+- `discord.js@14`
+- `Prisma` + PostgreSQL
+- `vitest` for tests; `eslint` + `prettier` for quality
+
+## Project structure
+
+```
+src/
+  core/      bootstrap, client, command+event registry, services container, logger, permissions
+  design/    theme + embed/component design system (the "interface")
+  store/     prisma client
+  services/  business logic: settings, cases, moderation, logging, automod, tickets, utility
+  commands/  slash commands grouped by module (auto-loaded)
+  events/    discord event handlers (auto-loaded)
+tests/       vitest specs
+prisma/      schema + migrations
+```
+
+Commands and events are auto-discovered. A command file exports:
+
+```ts
+export default {
+  data: new SlashCommandBuilder().setName("example").setDescription("..."),
+  category: "Utility",
+  async execute(interaction: ChatInputCommandInteraction) { /* ... */ },
+};
+```
+
+Inside a command, reach services via `const client = interaction.client as WingsClient; client.services.<name>`.
+
+## Setup (development)
+
+```bash
+cp .env.example .env            # fill DISCORD_TOKEN, CLIENT_ID, DATABASE_URL
+docker compose up -d            # local Postgres
+npm install
+npx prisma generate
+npx prisma migrate dev
+npm run dev
+```
+
+Register slash commands (guild-scoped for speed):
+
+```bash
+npm run deploy
+```
+
+## Production
+
+```bash
+npm ci
+npx prisma migrate deploy
+npm run start
+```
+
+The bot needs the `Guilds`, `GuildMembers`, `GuildMessages`, `GuildBans`, `MessageContent`, and `GuildVoiceStates` intents and the `bot` + `applications.commands` scopes. For moderation it needs `Ban Members`, `Kick Members`, `Moderate Members`, `Manage Channels`, and `Manage Messages`.
+
+## Quality
+
+```bash
+npm run typecheck   # tsc --noEmit
+npm run lint        # eslint
+npm run test        # vitest
+npm run format      # prettier
+```
+
+## Feature set
+
+- **Moderation + Cases** — ban, kick, timeout, warn, note; every action opens a numbered case with target/moderator/reason/duration. `/case view|resolve|user|moderator`.
+- **Logging** — message edits/deletes, joins/leaves, role changes to configured channels.
+- **Automod** — spam, mention spam, invite filtering, raid/join-spike detection, exemptions, escalation.
+- **Tickets** — panel → category → channel → claim/close/reopen/transcript.
+- **Utility** — whois, avatar, serverinfo, poll, reminder, purge, slowmode.
+- **Settings** — `/settings` with progressive categories (logging, welcome, moderation, tickets, automod, general).
+
+WINGS intentionally omits generic leveling/economy/giveaways; those are added only when the server needs them.
