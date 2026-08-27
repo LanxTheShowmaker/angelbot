@@ -5,7 +5,7 @@ const CATEGORIES = [
     { value: "logging", label: "Logging", description: "Log & mod-log channels" },
     { value: "moderation", label: "Moderation", description: "Prefix, case behavior" },
     { value: "welcome", label: "Welcome & Goodbye", description: "Join/leave channels" },
-    { value: "tickets", label: "Tickets", description: "Ticket system" },
+    { value: "orders", label: "Orders", description: "Design order system" },
     { value: "automod", label: "Automod", description: "Filters & thresholds" },
     { value: "general", label: "General", description: "Overview & roles" },
 ];
@@ -48,22 +48,22 @@ export default {
         });
         client.components.set("wings:settings:channel:logChannelId", async (i) => {
             const id = i.values[0];
-            await client.services.settings.patch(i.guildId, { logChannelId: id });
+            await         i.client.services.settings.patch(i.guildId, { logChannelId: id });
             await renderCategory(i, "logging", await client.services.settings.get(i.guildId));
         });
         client.components.set("wings:settings:channel:modLogChannelId", async (i) => {
             const id = i.values[0];
-            await client.services.settings.patch(i.guildId, { modLogChannelId: id });
+            await         i.client.services.settings.patch(i.guildId, { modLogChannelId: id });
             await renderCategory(i, "logging", await client.services.settings.get(i.guildId));
         });
         client.components.set("wings:settings:channel:welcomeChannelId", async (i) => {
             const id = i.values[0];
-            await client.services.settings.patch(i.guildId, { welcomeChannelId: id });
+            await         i.client.services.settings.patch(i.guildId, { welcomeChannelId: id });
             await renderCategory(i, "welcome", await client.services.settings.get(i.guildId));
         });
         client.components.set("wings:settings:channel:goodbyeChannelId", async (i) => {
             const id = i.values[0];
-            await client.services.settings.patch(i.guildId, { goodbyeChannelId: id });
+            await         i.client.services.settings.patch(i.guildId, { goodbyeChannelId: id });
             await renderCategory(i, "welcome", await client.services.settings.get(i.guildId));
         });
         client.components.set("wings:settings:prefix", async (i) => {
@@ -110,8 +110,11 @@ async function renderCategory(i, category, cfg) {
         await i.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(prefixBtn), backRow()] });
         return;
     }
-    if (category === "tickets") {
-        await i.update({ embeds: [embeds.info("Settings · Tickets", "The ticket system can be configured here once enabled.")], components: [backRow()] });
+    if (category === "orders") {
+        const cats = cfg.orders?.categories;
+        await i.update({ embeds: [embeds.info("Settings · Orders", "Manage the design-order system. Use `/order categories` to add or remove design types.", [
+            { name: "Categories", value: cats?.length ? cats.map((c) => `**${c.label}** (\`${c.value}\`)`).join(", ") : "*(defaults)*" },
+        ])], components: [backRow()] });
         return;
     }
     if (category === "automod") {

@@ -2,13 +2,17 @@ import { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ModalBu
 import { embeds } from "../../design/embeds.js";
 import { isStaff } from "../../core/services.js";
 import { logger } from "../../core/logger.js";
-const NUMERIC_KEYS = ["maxMentions", "spamThreshold", "spamWindowMs", "raidJoinThreshold", "raidWindowMs"];
+const NUMERIC_KEYS = ["maxMentions", "spamThreshold", "spamWindowMs", "raidJoinThreshold", "raidWindowMs", "newAccountMaxAgeDays", "emojiSpamThreshold", "clusterSpamThreshold", "clusterSpamWindowMs"];
 const NUMERIC_LABELS = {
     maxMentions: "Max mentions",
     spamThreshold: "Spam threshold",
     spamWindowMs: "Spam window (ms)",
     raidJoinThreshold: "Raid join threshold",
     raidWindowMs: "Raid window (ms)",
+    newAccountMaxAgeDays: "New account age (days)",
+    emojiSpamThreshold: "Emoji spam threshold",
+    clusterSpamThreshold: "Cluster spam threshold",
+    clusterSpamWindowMs: "Cluster spam window (ms)",
 };
 const DEFAULTS = {
     maxMentions: 5,
@@ -16,21 +20,38 @@ const DEFAULTS = {
     spamWindowMs: 5000,
     raidJoinThreshold: 10,
     raidWindowMs: 30000,
+    newAccountMaxAgeDays: 7,
+    emojiSpamThreshold: 10,
+    clusterSpamThreshold: 3,
+    clusterSpamWindowMs: 60000,
 };
 function num(a, k) {
     return typeof a[k] === "number" ? a[k] : DEFAULTS[k];
 }
 function bool(a, k) {
-    return typeof a[k] === "boolean" ? a[k] : k === "inviteFilter";
+    if (typeof a[k] === "boolean")
+        return a[k];
+    if (k === "linkFilter")
+        return false;
+    return true;
 }
 function buildEmbed(automod) {
     const a = automod ?? {};
     return embeds.info("Automod settings", "Use the menu below to adjust filters and thresholds.", [
         { name: "Invite filter", value: bool(a, "inviteFilter") ? "On" : "Off", inline: true },
         { name: "Link filter", value: bool(a, "linkFilter") ? "On" : "Off", inline: true },
+        { name: "New-account filter", value: bool(a, "newAccountFilter") ? "On" : "Off", inline: true },
+        { name: "Zalgo filter", value: bool(a, "zalgoFilter") ? "On" : "Off", inline: true },
+        { name: "Scam-URL filter", value: bool(a, "scamUrlFilter") ? "On" : "Off", inline: true },
+        { name: "Cluster spam", value: bool(a, "clusterSpam") ? "On" : "Off", inline: true },
+        { name: "Auto-lockdown", value: bool(a, "autoLockdown") ? "On" : "Off", inline: true },
         { name: "Max mentions", value: `${num(a, "maxMentions")}`, inline: true },
         { name: "Spam threshold", value: `${num(a, "spamThreshold")}`, inline: true },
         { name: "Spam window (ms)", value: `${num(a, "spamWindowMs")}`, inline: true },
+        { name: "New-account age (days)", value: `${num(a, "newAccountMaxAgeDays")}`, inline: true },
+        { name: "Emoji spam threshold", value: `${num(a, "emojiSpamThreshold")}`, inline: true },
+        { name: "Cluster threshold", value: `${num(a, "clusterSpamThreshold")}`, inline: true },
+        { name: "Cluster window (ms)", value: `${num(a, "clusterSpamWindowMs")}`, inline: true },
         { name: "Raid join threshold", value: `${num(a, "raidJoinThreshold")}`, inline: true },
         { name: "Raid window (ms)", value: `${num(a, "raidWindowMs")}`, inline: true },
     ]);
@@ -42,9 +63,18 @@ function menuRow() {
         .addOptions([
         { label: "Toggle invite filter", value: "inviteFilter", description: "Block Discord invite links" },
         { label: "Toggle link filter", value: "linkFilter", description: "Block all http(s) links" },
+        { label: "Toggle new-account filter", value: "newAccountFilter", description: "Restrict links/invites for new accounts" },
+        { label: "Toggle zalgo filter", value: "zalgoFilter", description: "Block text corruption spam" },
+        { label: "Toggle scam-URL filter", value: "scamUrlFilter", description: "Block common scam links" },
+        { label: "Toggle cluster spam", value: "clusterSpam", description: "Same message from many users" },
+        { label: "Toggle auto-lockdown", value: "autoLockdown", description: "Auto fortress on raid detection" },
         { label: "Set max mentions", value: "maxMentions", description: "Mention spam threshold" },
         { label: "Set spam threshold", value: "spamThreshold", description: "Messages in window before spam" },
         { label: "Set spam window (ms)", value: "spamWindowMs", description: "Spam detection window" },
+        { label: "Set new-account age (days)", value: "newAccountMaxAgeDays", description: "Age before links allowed" },
+        { label: "Set emoji spam threshold", value: "emojiSpamThreshold", description: "Emojis before punishment" },
+        { label: "Set cluster threshold", value: "clusterSpamThreshold", description: "Accounts before cluster punish" },
+        { label: "Set cluster window (ms)", value: "clusterSpamWindowMs", description: "Cluster detection window" },
         { label: "Set raid join threshold", value: "raidJoinThreshold", description: "Joins counted as a raid" },
         { label: "Set raid window (ms)", value: "raidWindowMs", description: "Raid detection window" },
     ]);

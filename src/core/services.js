@@ -4,8 +4,9 @@ import { CasesService } from "../services/cases.js";
 import { LoggingService } from "../services/logging.js";
 import { ModerationService } from "../services/moderation.js";
 import { AutomodService } from "../services/automod.js";
-import { TicketService } from "../services/tickets.js";
+import { OrderService } from "../services/orders.js";
 import { UtilityService } from "../services/utility.js";
+import { FortressService } from "../services/fortress.js";
 export function createServices(client) {
     const prisma = new PrismaClient();
     const settings = new SettingsService(prisma);
@@ -13,9 +14,10 @@ export function createServices(client) {
     const logging = new LoggingService(prisma, client);
     const moderation = new ModerationService(prisma, cases, logging);
     const automod = new AutomodService(prisma, client, settings, logging);
-    const tickets = new TicketService(prisma, client, settings);
+    const orders = new OrderService(prisma, client, settings);
+    const fortress = new FortressService(prisma, client, settings, logging);
     const utility = new UtilityService(prisma, client);
-    return { settings, cases, moderation, logging, automod, tickets, utility };
+    return { settings, cases, moderation, logging, automod, orders, fortress, utility };
 }
 export function isStaff(member, config) {
     if (member.permissions.has("Administrator") || member.permissions.has("ManageGuild"))

@@ -23,7 +23,7 @@ src/
   core/      bootstrap, client, command+event registry, services container, logger, permissions
   design/    theme + embed/component design system (the "interface")
   store/     prisma client
-  services/  business logic: settings, cases, moderation, logging, automod, tickets, utility
+  services/  business logic: settings, cases, moderation, logging, automod, orders, fortress, utility
   commands/  slash commands grouped by module (auto-loaded)
   events/    discord event handlers (auto-loaded)
 tests/       vitest specs
@@ -81,9 +81,10 @@ later (e.g. ESLint, Prettier, Vitest) if desired; the runtime depends only on
 
 - **Moderation + Cases** — ban, kick, timeout, warn, note; every action opens a numbered case with target/moderator/reason/duration. `/case view|resolve|user|moderator`.
 - **Logging** — message edits/deletes, joins/leaves, role changes to configured channels.
-- **Automod** — spam, mention spam, invite filtering, raid/join-spike detection, exemptions, escalation.
-- **Tickets** — panel → category → channel → claim/close/reopen/transcript.
+- **Automod (deep)** — spam, mention spam, invite/link filtering, **new-account link lockdown**, zalgo & emoji-spam, scam-URL blocking, multi-user **cluster spam**, raid/join-spike detection, per-channel exemptions, offense escalation ladder, and **auto-fortress** on raid.
+- **Design Orders** — `/order panel` → category → brief modal (description, budget, deadline, references) → private channel with a live status pipeline (`Brief → Claimed → In Progress → Review → Revision → Delivered → Paid → Closed`), designer claim, add/remove users, and transcript export. `/order list` shows the production board; `/order categories` manages design types.
+- **Fortress / lockdown** — `/fortress enable` snapshots and locks every channel to staff only (restored on `/fortress disable`), with status and auto-trigger during raids.
 - **Utility** — whois, avatar, serverinfo, poll, reminder, purge, slowmode.
-- **Settings** — `/settings` with progressive categories (logging, welcome, moderation, tickets, automod, general).
+- **Settings** — `/settings` with progressive categories (logging, welcome, moderation, orders, automod, general).
 
-WINGS intentionally omits generic leveling/economy/giveaways; those are added only when the server needs them.
+WINGS is purpose-built for a design/commission server: the ticket system is replaced by the order system, and moderation is hardened for raids and scam defense.

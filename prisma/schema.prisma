@@ -20,6 +20,7 @@ model GuildConfig {
   ignoredUserIds   String[] @default([])
   modules          Json     @default("{}")
   automod          Json     @default("{}")
+  orders           Json     @default("{}")
   prefix           String   @default("!")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -48,17 +49,31 @@ model Case {
   @@index([guildId, targetId])
 }
 
-model Ticket {
-  id         String   @id @default(uuid())
-  guildId    String
-  channelId  String   @unique
-  openerId   String
+model Order {
+  id          String    @id @default(uuid())
+  guildId     String
+  channelId   String    @unique
+  openerId    String
   claimedById String?
-  category   String?
-  status     String   @default("OPEN")
-  createdAt  DateTime @default(now())
-  closedAt   DateTime?
-  transcript String?
+  category    String
+  status      String    @default("BRIEF")
+  brief       String?
+  budget      String?
+  deadline    DateTime?
+  references  String?
+  createdAt   DateTime  @default(now())
+  closedAt    DateTime?
+  transcript  String?
+  @@index([guildId, status])
+}
+
+model FortressState {
+  guildId     String    @id
+  active      Boolean   @default(false)
+  enabledById String?
+  enabledByTag String?
+  startedAt   DateTime?
+  snapshot    Json
 }
 
 model Reminder {

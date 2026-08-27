@@ -1,4 +1,4 @@
-const DEFAULT_MODULES = { moderation: true, automod: true, logging: true, tickets: true, welcome: true };
+const DEFAULT_MODULES = { moderation: true, automod: true, logging: true, orders: true, welcome: true };
 const DEFAULT_AUTOMOD = {
     enabled: true,
     maxMentions: 5,
