@@ -7,6 +7,9 @@ import { AutomodService } from "../services/automod.js";
 import { OrderService } from "../services/orders.js";
 import { UtilityService } from "../services/utility.js";
 import { FortressService } from "../services/fortress.js";
+import { AssetService } from "../services/assets.js";
+import { PanelService } from "../services/panels.js";
+import { TicketSystemService } from "../services/ticketSystem.js";
 export function createServices(client) {
     const prisma = new PrismaClient();
     // SQLite hardening for multi-guild (global bot) — WAL + busy timeout
@@ -21,7 +24,13 @@ export function createServices(client) {
     const orders = new OrderService(prisma, client, settings);
     const fortress = new FortressService(prisma, client, settings, logging);
     const utility = new UtilityService(prisma, client);
-    return { settings, cases, moderation, logging, automod, orders, fortress, utility };
+    const assets = new AssetService(client);
+    const panels = new PanelService(prisma, client);
+    const tickets = new TicketSystemService(prisma, client, settings, logging);
+    // Inject prisma into assets/panels that need it (assets needs settings, already has client)
+    // Cross-wire assets with prisma for convenience
+    client.prisma = prisma;
+    return { settings, cases, moderation, logging, automod, orders, fortress, utility, assets, panels, tickets, prisma };
 }
 export function isStaff(member, config) {
     if (member.permissions.has("Administrator") || member.permissions.has("ManageGuild"))

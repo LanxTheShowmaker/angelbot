@@ -98,3 +98,71 @@ model Poll {
   endsAt    DateTime?
   createdAt DateTime @default(now())
 }
+
+model Panel {
+  id              String   @id @default(uuid())
+  guildId         String
+  panelType       String
+  channelId       String?
+  messageId       String?
+  title           String?
+  description     String?
+  bannerUrl       String?
+  bannerChannelId String?
+  bannerMessageId String?
+  thumbnailUrl    String?
+  embedColor      Int?
+  footerText      String?
+  footerIcon      String?
+  enabled         Boolean  @default(false)
+  config          String   @default("{}")
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@unique([guildId, panelType])
+  @@index([guildId])
+}
+
+model TicketType {
+  id               String  @id @default(uuid())
+  guildId          String
+  panelType        String
+  key              String
+  displayName      String
+  description      String?
+  emoji            String?
+  enabled          Boolean @default(true)
+  categoryId       String?
+  staffRoleIds     String  @default("[]")
+  moderatorRoleIds String  @default("[]")
+  channelPrefix    String? @default("ticket")
+  welcomeMessage   String?
+  instructions     String?
+  bannerUrl        String?
+  priority         String  @default("NORMAL")
+  cooldown         Int     @default(0)
+  maxOpen          Int     @default(1)
+  allowClaim       Boolean @default(true)
+  questions        String  @default("[]")
+
+  @@unique([guildId, key])
+  @@index([guildId, panelType])
+}
+
+model Ticket {
+  id          String    @id @default(uuid())
+  guildId     String
+  channelId   String    @unique
+  openerId    String
+  typeId      String?
+  panelType   String?
+  status      String    @default("OPEN")
+  priority    String    @default("NORMAL")
+  claimedById String?
+  createdAt   DateTime  @default(now())
+  closedAt    DateTime?
+  transcript  String?
+
+  @@index([guildId, openerId])
+  @@index([guildId, status])
+}

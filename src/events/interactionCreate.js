@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import { embeds } from "../design/embeds.js";
 import { logger } from "../core/logger.js";
 function resolveComponent(client, customId) {
@@ -42,10 +43,10 @@ export default {
             logger.error("interaction", "unhandled error", e);
             const reply = embeds.error("Something went wrong", "That action could not be completed. Please try again or contact staff.");
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ embeds: [reply], ephemeral: true }).catch(() => { });
+                await interaction.followUp({ embeds: [reply], flags: MessageFlags.Ephemeral }).catch(() => { });
             }
             else {
-                await interaction.reply({ embeds: [reply], ephemeral: true }).catch(() => { });
+                await interaction.reply({ embeds: [reply], flags: MessageFlags.Ephemeral }).catch(() => { });
             }
         }
     },
