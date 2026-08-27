@@ -12,10 +12,9 @@ A bespoke, premium Discord application built for a single private server. WINGS 
 
 ## Stack
 
-- TypeScript (ESM), run with `tsx`
+- Plain JavaScript (ESM), run with `node`
 - `discord.js@14`
 - `Prisma` + PostgreSQL
-- `vitest` for tests; `eslint` + `prettier` for quality
 
 ## Project structure
 
@@ -60,6 +59,8 @@ Register slash commands (guild-scoped for speed):
 npm run deploy
 ```
 
+The commands are plain `.js` files under `src/commands` — edit and restart (or use `npm run dev` for auto-reload).
+
 ## Production
 
 ```bash
@@ -72,12 +73,9 @@ The bot needs the `Guilds`, `GuildMembers`, `GuildMessages`, `GuildBans`, `Messa
 
 ## Quality
 
-```bash
-npm run typecheck   # tsc --noEmit
-npm run lint        # eslint
-npm run test        # vitest
-npm run format      # prettier
-```
+The project is plain ESM JavaScript. Lint/format/testing tooling can be added
+later (e.g. ESLint, Prettier, Vitest) if desired; the runtime depends only on
+`node`, `discord.js`, and `Prisma`.
 
 ## Feature set
 

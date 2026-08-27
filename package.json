@@ -3,19 +3,14 @@
   "version": "1.0.0",
   "description": "WINGS — a bespoke, premium Discord application for a single private server.",
   "type": "module",
-  "main": "src/core/bootstrap.ts",
+  "main": "src/core/bootstrap.js",
   "scripts": {
-    "dev": "tsx watch src/core/bootstrap.ts",
-    "start": "tsx src/core/bootstrap.ts",
-    "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.json",
-    "lint": "eslint . --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "test": "vitest run",
+    "start": "node src/core/bootstrap.js",
+    "dev": "node --watch src/core/bootstrap.js",
+    "deploy": "node src/core/deploy.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "deploy": "tsx src/core/deploy.ts"
+    "prisma:deploy": "prisma migrate deploy"
   },
   "engines": {
     "node": ">=20"
@@ -26,14 +21,6 @@
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "eslint": "^9.0.0",
-    "prettier": "^3.3.0",
-    "prisma": "^5.22.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.5.0",
-    "vitest": "^2.1.0"
+    "prisma": "^5.22.0"
   }
 }
