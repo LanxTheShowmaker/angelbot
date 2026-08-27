@@ -75,7 +75,27 @@ export class SettingsService {
             if (f in next)
                 next[f] = serializeField(f, next[f]);
         }
-        return this.prisma.guildConfig.update({ where: { guildId }, data: { ...next, updatedAt: new Date() } });
+        // Upsert to handle new guilds (P2025 fix) — creates with defaults if missing
+        return this.prisma.guildConfig.upsert({
+            where: { guildId },
+            update: { ...next, updatedAt: new Date() },
+            create: {
+                guildId,
+                logChannelId: next.logChannelId ?? null,
+                modLogChannelId: next.modLogChannelId ?? null,
+                welcomeChannelId: next.welcomeChannelId ?? null,
+                goodbyeChannelId: next.goodbyeChannelId ?? null,
+                prefix: next.prefix ?? "!",
+                staffRoleIds: next.staffRoleIds ?? "[]",
+                moderatorRoleIds: next.moderatorRoleIds ?? "[]",
+                ignoredChannelIds: next.ignoredChannelIds ?? "[]",
+                ignoredRoleIds: next.ignoredRoleIds ?? "[]",
+                ignoredUserIds: next.ignoredUserIds ?? "[]",
+                modules: next.modules ?? JSON.stringify(DEFAULT_MODULES),
+                automod: next.automod ?? JSON.stringify(DEFAULT_AUTOMOD),
+                orders: next.orders ?? "{}",
+            },
+        });
     }
     async setModule(guildId, key, value) {
         const current = await this.get(guildId);
