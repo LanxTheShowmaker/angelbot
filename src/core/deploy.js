@@ -13,14 +13,20 @@ async function deploy() {
     const body = commands.map((c) => c.data.toJSON());
     const rest = new REST({ version: "10" }).setToken(token);
     try {
-        const guildId = process.env.GUILD_ID;
-        if (guildId) {
+        const args = process.argv.slice(2);
+        const guildArg = args.find((a) => a === "--guild" || a.startsWith("--guild="));
+        if (guildArg) {
+            const guildId = guildArg.includes("=") ? guildArg.split("=")[1] : process.env.GUILD_ID;
+            if (!guildId) {
+                logger.error("deploy", "GUILD_ID is required for --guild deploy. Set GUILD_ID in .env or use --guild=ID");
+                process.exit(1);
+            }
             await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body });
-            logger.info("deploy", `Deployed ${body.length} commands to guild ${guildId}`);
+            logger.info("deploy", `Deployed ${body.length} commands to guild ${guildId} (dev instant)`);
         }
         else {
             await rest.put(Routes.applicationCommands(clientId), { body });
-            logger.info("deploy", `Deployed ${body.length} global commands`);
+            logger.info("deploy", `Deployed ${body.length} global commands (propagates up to 1h)`);
         }
     }
     catch (e) {

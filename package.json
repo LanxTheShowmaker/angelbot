@@ -1,7 +1,7 @@
 {
-  "name": "wings",
+  "name": "angel",
   "version": "1.0.0",
-  "description": "WINGS — a bespoke, premium Discord application for a single private server.",
+  "description": "A.N.G.E.L. — a global, per-server configurable Discord application with autosetup.",
   "type": "module",
   "main": "src/core/bootstrap.js",
   "scripts": {

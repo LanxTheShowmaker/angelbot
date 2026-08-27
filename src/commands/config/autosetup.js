@@ -35,7 +35,7 @@ function renderSetup(guild) {
         .setCustomId("wings:setup:confirm")
         .setLabel("Run setup")
         .setStyle(ButtonStyle.Primary);
-    const embed = embeds.info("Auto-setup", "Pick the **Staff** and **Moderator** roles, then click **Run setup**. WINGS will create its log, mod-log, and order channels, and write the configuration.", [
+    const embed = embeds.info("Auto-setup", "Pick the **Staff** and **Moderator** roles, then click **Run setup**. A.N.G.E.L. will create its log, mod-log, and order channels, and write the configuration.", [
         { name: "Staff", value: sel.staff.length ? sel.staff.map((id) => `<@&${id}>`).join(", ") : "—", inline: true },
         { name: "Moderator", value: sel.mod.length ? sel.mod.map((id) => `<@&${id}>`).join(", ") : "—", inline: true },
     ]);
@@ -78,7 +78,7 @@ async function runSetup(client, guild, sel) {
         ...allowIds.map((id) => ({ id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] })),
     ];
     const ordersCat = await ensureCategory(guild, "design-orders");
-    const logsCat = await ensureCategory(guild, "WINGS Logs");
+    const logsCat = await ensureCategory(guild, "A.N.G.E.L. Logs");
     const logCh = await ensureTextChannel(guild, "wings-log", logsCat, logOverwrites);
     const modLogCh = await ensureTextChannel(guild, "wings-modlog", logsCat, logOverwrites);
     const welcomeCh = await ensureTextChannel(guild, "wings-welcome", null);
@@ -97,7 +97,7 @@ async function runSetup(client, guild, sel) {
 export default {
     data: new SlashCommandBuilder()
         .setName("autosetup")
-        .setDescription("Bootstrap WINGS for this server: roles, log channels, and order channels"),
+        .setDescription("Bootstrap A.N.G.E.L. for this server: roles, log channels, and order channels"),
     category: "Config",
     async execute(interaction) {
         const client = interaction.client;
@@ -137,7 +137,7 @@ export default {
             try {
                 const r = await runSetup(i.client, i.guild, sel);
                 await i.editReply({
-                    embeds: [embeds.success("WINGS is configured", "Your server is set up. Logging, mod-log, and design-order channels are ready.", [
+                    embeds: [embeds.success("A.N.G.E.L. is configured", "Your server is set up. Logging, mod-log, and design-order channels are ready.", [
                         { name: "Staff roles", value: sel.staff.map((id) => `<@&${id}>`).join(", "), inline: true },
                         { name: "Moderator roles", value: sel.mod.map((id) => `<@&${id}>`).join(", "), inline: true },
                         { name: "Log channel", value: `${r.logCh}`, inline: true },
@@ -150,7 +150,7 @@ export default {
             }
             catch (e) {
                 logger.error("autosetup", "run failed", e);
-                await i.editReply({ embeds: [embeds.error("Setup failed", "Could not finish setup. Ensure WINGS has **Manage Channels** and **Manage Roles**.")], components: [] }).catch(() => { });
+                await i.editReply({ embeds: [embeds.error("Setup failed", "Could not finish setup. Ensure A.N.G.E.L. has **Manage Channels** and **Manage Roles**.")], components: [] }).catch(() => { });
             }
             selections.delete(i.guild.id);
         });

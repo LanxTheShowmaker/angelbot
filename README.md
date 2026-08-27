@@ -1,6 +1,6 @@
-# WINGS
+# A.N.G.E.L.
 
-A bespoke, premium Discord application built for a single private server. WINGS is designed to feel intentional: consistent visual language, fast slash commands, a unified case system for moderation, structured logging, and graceful failure handling.
+A global, per-server configurable Discord application. A.N.G.E.L. is designed to feel intentional: consistent visual language, fast slash commands, a unified case system for moderation, structured logging, and graceful failure handling. Every server configures itself with `/autosetup`.
 
 ## Principles
 
@@ -8,7 +8,7 @@ A bespoke, premium Discord application built for a single private server. WINGS 
 - Every response follows one design system (`src/design`).
 - Sensible confirmation for destructive actions; ephemeral by default for moderation.
 - No raw Discord/DB errors reach ordinary users.
-- Persistent state lives in Postgres via Prisma — never scattered JSON.
+- Persistent state lives in SQLite via Prisma (per-guild `GuildConfig` + `GuildId` isolation) — never scattered JSON.
 
 ## Stack
 
@@ -40,7 +40,7 @@ export default {
 };
 ```
 
-Inside a command, reach services via `const client = interaction.client as WingsClient; client.services.<name>`.
+Inside a command, reach services via `const client = interaction.client as AngelClient; client.services.<name>`.
 
 ## Setup (development)
 
@@ -52,13 +52,14 @@ npx prisma migrate dev          # creates the local wings.db file
 npm run dev
 ```
 
-Register slash commands (guild-scoped for speed):
+Register slash commands (global, per-server config via `/autosetup`):
 
 ```bash
-npm run deploy
+npm run deploy              # global (public, 1h propagate)
+npm run deploy -- --guild   # dev fast guild deploy when GUILD_ID is set
 ```
 
-The commands are plain `.js` files under `src/commands` — edit and restart (or use `npm run dev` for auto-reload).
+The commands are plain `.js` files under `src/commands` — edit and restart (or use `npm run dev` for auto-reload). After inviting A.N.G.E.L. to a new server, run `/autosetup` to pick Staff/Mod roles and create log channels.
 
 ## Production
 
@@ -86,4 +87,4 @@ later (e.g. ESLint, Prettier, Vitest) if desired; the runtime depends only on
 - **Utility** — whois, avatar, serverinfo, poll, reminder, purge, slowmode.
 - **Settings** — `/settings` with progressive categories (logging, welcome, moderation, orders, automod, general).
 
-WINGS is purpose-built for a design/commission server: the ticket system is replaced by the order system, and moderation is hardened for raids and scam defense.
+A.N.G.E.L. is built for any server that wants design/order commissions, hardened moderation, and per-server autosetup — the ticket system is replaced by the order system.

@@ -31,7 +31,7 @@ async function main() {
             client.on(event.name, (...args) => event.execute(...args, client));
     }
     await client.login(token);
-    logger.info("bootstrap", `WINGS online as ${client.user?.tag ?? "unknown"}`);
+    logger.info("bootstrap", `A.N.G.E.L. online as ${client.user?.tag ?? "unknown"}`);
 }
 main().catch((e) => {
     logger.error("bootstrap", "fatal startup error", e);

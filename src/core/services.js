@@ -9,6 +9,10 @@ import { UtilityService } from "../services/utility.js";
 import { FortressService } from "../services/fortress.js";
 export function createServices(client) {
     const prisma = new PrismaClient();
+    // SQLite hardening for multi-guild (global bot) — WAL + busy timeout
+    prisma.$executeRawUnsafe("PRAGMA journal_mode=WAL;").catch(() => {});
+    prisma.$executeRawUnsafe("PRAGMA busy_timeout=5000;").catch(() => {});
+    prisma.$executeRawUnsafe("PRAGMA synchronous=NORMAL;").catch(() => {});
     const settings = new SettingsService(prisma);
     const cases = new CasesService(prisma);
     const logging = new LoggingService(prisma, client);

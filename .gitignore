@@ -7,6 +7,10 @@ dist/
 *.js.map
 prisma/wings.db
 prisma/wings.db-journal
+prisma/wings.db-wal
+prisma/wings.db-shm
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 .DS_Store

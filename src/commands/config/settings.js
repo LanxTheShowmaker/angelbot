@@ -10,7 +10,7 @@ const CATEGORIES = [
     { value: "general", label: "General", description: "Overview & roles" },
 ];
 function mainEmbed(config) {
-    return embeds.info("WINGS · Server Settings", "Select a category to configure.", [
+    return embeds.info("A.N.G.E.L. · Server Settings", "Select a category to configure.", [
         { name: "Prefix", value: config.prefix, inline: true },
         { name: "Staff roles", value: `${config.staffRoleIds.length}`, inline: true },
         { name: "Mod roles", value: `${config.moderatorRoleIds.length}`, inline: true },
@@ -28,14 +28,14 @@ function channelRow(customId, placeholder) {
     return new ActionRowBuilder().addComponents(menu);
 }
 export default {
-    data: new SlashCommandBuilder().setName("settings").setDescription("Configure WINGS for this server"),
+    data: new SlashCommandBuilder().setName("settings").setDescription("Configure A.N.G.E.L. for this server"),
     category: "Config",
     async execute(interaction) {
         const client = interaction.client;
         const member = interaction.member;
         const config = await client.services.settings.get(interaction.guildId).catch(() => null);
         if (!isStaff(member, config)) {
-            return interaction.reply({ embeds: [embeds.error("Missing permission", "Only staff can configure WINGS.")], ephemeral: true });
+            return interaction.reply({ embeds: [embeds.error("Missing permission", "Only staff can configure A.N.G.E.L.")], ephemeral: true });
         }
         await interaction.deferReply({ ephemeral: true });
         const cfg = await client.services.settings.get(interaction.guildId);
@@ -81,7 +81,7 @@ export default {
 };
 async function renderCategory(i, category, cfg) {
     if (category === "logging") {
-        const embed = embeds.info("Settings · Logging", "Choose where WINGS sends logs.", [
+        const embed = embeds.info("Settings · Logging", "Choose where A.N.G.E.L. sends logs.", [
             { name: "Log channel", value: cfg.logChannelId ? `<#${cfg.logChannelId}>` : "Not set", inline: true },
             { name: "Mod-log channel", value: cfg.modLogChannelId ? `<#${cfg.modLogChannelId}>` : "Not set", inline: true },
         ]);

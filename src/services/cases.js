@@ -12,8 +12,15 @@ export class CasesService {
         return (last?.caseNumber ?? 0) + 1;
     }
     async create(input) {
-        const caseNumber = await this.nextCaseNumber(input.guildId);
-        return this.prisma.case.create({ data: { ...input, caseNumber } });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const caseNumber = await this.nextCaseNumber(input.guildId);
+            try {
+                return await this.prisma.case.create({ data: { ...input, caseNumber } });
+            } catch (e) {
+                if (e?.code === "P2002" && attempt < 2) continue;
+                throw e;
+            }
+        }
     }
     async get(guildId, caseNumber) {
         return this.prisma.case.findUnique({ where: { guildId_caseNumber: { guildId, caseNumber } } });

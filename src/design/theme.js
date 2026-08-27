@@ -8,8 +8,8 @@ export const Theme = {
     text: 0x1f2330,
 };
 export const Brand = {
-    name: "WINGS",
-    footer: "WINGS",
+    name: "A.N.G.E.L.",
+    footer: "A.N.G.E.L.",
     mark: "❖",
 };
 //# sourceMappingURL=theme.js.map

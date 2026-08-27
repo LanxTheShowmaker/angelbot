@@ -147,9 +147,10 @@ export class AutomodService {
         await this.trackSpam(message, am);
     }
     async trackCluster(message, am) {
-        const key = message.content.toLowerCase().replace(/\s+/g, " ").trim();
-        if (key.length < 12)
+        const raw = message.content.toLowerCase().replace(/\s+/g, " ").trim();
+        if (raw.length < 12)
             return false;
+        const key = `${message.guild.id}:${raw}`;
         const now = Date.now();
         let entry = this.clusterMap.get(key);
         if (!entry || now - entry.first > am.clusterSpamWindowMs)
