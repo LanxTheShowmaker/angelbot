@@ -20,15 +20,15 @@ export default {
         .setDescription("Design order system")
         .addSubcommand((s) => s.setName("panel").setDescription("Post the design-order panel with a Request Design button"))
         .addSubcommand((s) => s.setName("list").setDescription("List open design orders (staff)"))
-        .addSubcommand((s) => s.setName("categories").setDescription("Manage design categories"))
-        .addStringOption((o) => o.setName("action").setDescription("Category action").addChoices(
-            { name: "list", value: "list" },
-            { name: "add", value: "add" },
-            { name: "remove", value: "remove" },
-        ))
-        .addStringOption((o) => o.setName("value").setDescription("Category value (for add/remove)"))
-        .addStringOption((o) => o.setName("label").setDescription("Category label (for add)"))
-        .addStringOption((o) => o.setName("description").setDescription("Category description (for add)")),
+        .addSubcommand((s) => s.setName("categories").setDescription("Manage design categories")
+            .addStringOption((o) => o.setName("action").setDescription("Category action").addChoices(
+                { name: "list", value: "list" },
+                { name: "add", value: "add" },
+                { name: "remove", value: "remove" },
+            ))
+            .addStringOption((o) => o.setName("value").setDescription("Category value (for add/remove)"))
+            .addStringOption((o) => o.setName("label").setDescription("Category label (for add)"))
+            .addStringOption((o) => o.setName("description").setDescription("Category description (for add)"))),
     category: "Orders",
     async execute(interaction) {
         const client = interaction.client;

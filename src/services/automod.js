@@ -45,6 +45,7 @@ export class AutomodService {
     offenseMap = new Map();
     joinTimes = new Map();
     clusterMap = new Map();
+    raidCooldown = new Map();
     constructor(prisma, client, settings, logging) {
         this.prisma = prisma;
         this.client = client;
@@ -252,15 +253,20 @@ export class AutomodService {
         const channel = guild.channels.cache.get(id);
         if (!channel)
             return;
-        try {
-            await channel.send({
-                embeds: [
-                    embeds.warn("Possible raid detected", `Detected **${count}** joins within **${Math.round(am.raidWindowMs / 1000)}s** (threshold ${am.raidJoinThreshold}). Review recent members; fortress mode can be enabled with \`/fortress enable\`.`),
-                ],
-            });
-        }
-        catch (e) {
-            logger.error("automod", "raid alert failed", e);
+        const now = Date.now();
+        const last = this.raidCooldown.get(guild.id) ?? 0;
+        if (now - last >= 60000) {
+            this.raidCooldown.set(guild.id, now);
+            try {
+                await channel.send({
+                    embeds: [
+                        embeds.warn("Possible raid detected", `Detected **${count}** joins within **${Math.round(am.raidWindowMs / 1000)}s** (threshold ${am.raidJoinThreshold}). Review recent members; fortress mode can be enabled with \`/fortress enable\`.`),
+                    ],
+                });
+            }
+            catch (e) {
+                logger.error("automod", "raid alert failed", e);
+            }
         }
         if (am.autoLockdown) {
             await this.client.services.fortress?.autoEnable(guild, config).catch((e) => logger.error("automod", "auto fortress failed", e));

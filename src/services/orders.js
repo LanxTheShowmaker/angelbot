@@ -262,7 +262,7 @@ export class OrderService {
         });
         const embed = await this.buildIntroEmbed(order, opener.user.tag);
         const row = this.buildControlRow(channel.id);
-        const sent = await channel.send({ content: `<@${opener.id}>`, embeds: [embed], components: [row] });
+        const sent = await channel.send({ content: `<@${opener.id}>`, embeds: [embed], components: row });
         this.introMessages.set(channel.id, sent.id);
         this.registerControlHandlers();
         await this.logOrder(guild, order, `Order opened by ${opener.user.tag} (${label})`);
