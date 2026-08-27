@@ -79,7 +79,7 @@ export class UtilityService {
             await interaction.reply({ embeds: [embeds.error("Poll ended", "This poll no longer exists.")], ephemeral: true });
             return;
         }
-        const options = poll.options ?? [];
+        const options = typeof poll.options === "string" ? JSON.parse(poll.options) : (poll.options ?? []);
         if (!Number.isInteger(index) || index < 0 || index >= options.length) {
             await interaction.reply({ embeds: [embeds.error("Invalid option", "That option does not exist.")], ephemeral: true });
             return;
@@ -95,7 +95,7 @@ export class UtilityService {
         }
         voters.add(userId);
         options[index] = { ...options[index], votes: options[index].votes + 1 };
-        await this.prisma.poll.update({ where: { messageId }, data: { options: options } }).catch(() => { });
+        await this.prisma.poll.update({ where: { messageId }, data: { options: JSON.stringify(options) } }).catch(() => { });
         const message = interaction.message;
         if (message?.editable) {
             await message.edit({ embeds: [this.buildPollEmbed(poll.question, options)] }).catch(() => { });
@@ -123,7 +123,7 @@ export class UtilityService {
         return new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("Open avatar").setURL(url).setStyle(ButtonStyle.Link));
     }
     async createPoll(data) {
-        await this.prisma.poll.create({ data: { ...data, options: data.options } });
+        await this.prisma.poll.create({ data: { ...data, options: JSON.stringify(data.options) } });
     }
     async createReminder(data) {
         await this.prisma.reminder.create({ data });

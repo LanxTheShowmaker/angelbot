@@ -14,7 +14,7 @@ A bespoke, premium Discord application built for a single private server. WINGS 
 
 - Plain JavaScript (ESM), run with `node`
 - `discord.js@14`
-- `Prisma` + PostgreSQL
+- `Prisma` + SQLite (local file — no server or Docker required)
 
 ## Project structure
 
@@ -45,11 +45,10 @@ Inside a command, reach services via `const client = interaction.client as Wings
 ## Setup (development)
 
 ```bash
-cp .env.example .env            # fill DISCORD_TOKEN, CLIENT_ID, DATABASE_URL
-docker compose up -d            # local Postgres
+cp .env.example .env            # fill DISCORD_TOKEN, CLIENT_ID (DATABASE_URL is already set to a local SQLite file)
 npm install
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate dev          # creates the local wings.db file
 npm run dev
 ```
 

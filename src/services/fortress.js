@@ -22,7 +22,10 @@ export class FortressService {
         this.logging = logging;
     }
     async getState(guildId) {
-        return this.prisma.fortressState.findUnique({ where: { guildId } }).catch(() => null);
+        const state = await this.prisma.fortressState.findUnique({ where: { guildId } }).catch(() => null);
+        if (state?.snapshot)
+            state.snapshot = JSON.parse(state.snapshot);
+        return state;
     }
     async enable(guild, moderator) {
         const existing = await this.getState(guild.id);
@@ -59,14 +62,14 @@ export class FortressService {
                 enabledById: moderator?.id ?? null,
                 enabledByTag: moderator?.user?.tag ?? "Automated",
                 startedAt: new Date(),
-                snapshot,
+                snapshot: JSON.stringify(snapshot),
             },
             update: {
                 active: true,
                 enabledById: moderator?.id ?? null,
                 enabledByTag: moderator?.user?.tag ?? "Automated",
                 startedAt: new Date(),
-                snapshot,
+                snapshot: JSON.stringify(snapshot),
             },
         });
         await this.announce(guild, `**Fortress mode enabled** by ${moderator?.user?.tag ?? "Automated"}. Channels are locked; only staff can post.`);

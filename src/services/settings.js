@@ -8,22 +8,74 @@ const DEFAULT_AUTOMOD = {
     linkFilter: false,
     raidJoinThreshold: 10,
     raidWindowMs: 30000,
+    newAccountFilter: true,
+    newAccountMaxAgeDays: 7,
+    emojiSpamThreshold: 10,
+    zalgoFilter: true,
+    scamUrlFilter: true,
+    clusterSpam: true,
+    clusterSpamThreshold: 3,
+    clusterSpamWindowMs: 60000,
+    autoLockdown: true,
 };
+
+const JSON_FIELDS = [
+    "staffRoleIds", "moderatorRoleIds", "ignoredChannelIds", "ignoredRoleIds", "ignoredUserIds",
+    "modules", "automod", "orders",
+];
+
+function parseField(key, val) {
+    if (val == null)
+        return key.endsWith("Ids") ? [] : {};
+    try {
+        return JSON.parse(val);
+    }
+    catch {
+        return key.endsWith("Ids") ? [] : {};
+    }
+}
+
+function serializeField(key, val) {
+    return JSON.stringify(val ?? (key.endsWith("Ids") ? [] : {}));
+}
+
 export class SettingsService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
+    parse(row) {
+        if (!row)
+            return row;
+        const o = { ...row };
+        for (const f of JSON_FIELDS)
+            o[f] = parseField(f, row[f]);
+        return o;
+    }
     async get(guildId) {
         const existing = await this.prisma.guildConfig.findUnique({ where: { guildId } });
         if (existing)
-            return existing;
-        return this.prisma.guildConfig.create({
-            data: { guildId, modules: DEFAULT_MODULES, automod: DEFAULT_AUTOMOD },
-        });
+            return this.parse(existing);
+        return this.parse(await this.prisma.guildConfig.create({
+            data: {
+                guildId,
+                modules: JSON.stringify(DEFAULT_MODULES),
+                automod: JSON.stringify(DEFAULT_AUTOMOD),
+                staffRoleIds: "[]",
+                moderatorRoleIds: "[]",
+                ignoredChannelIds: "[]",
+                ignoredRoleIds: "[]",
+                ignoredUserIds: "[]",
+            },
+        }));
     }
     async patch(guildId, data) {
-        return this.prisma.guildConfig.update({ where: { guildId }, data: { ...data, updatedAt: new Date() } });
+        const next = { ...data };
+        for (const f of JSON_FIELDS) {
+            if (f in next)
+                next[f] = serializeField(f, next[f]);
+        }
+        return this.prisma.guildConfig.update({ where: { guildId }, data: { ...next, updatedAt: new Date() } });
     }
     async setModule(guildId, key, value) {
         const current = await this.get(guildId);
@@ -36,4 +88,3 @@ export class SettingsService {
         return modules[key] ?? true;
     }
 }
-//# sourceMappingURL=settings.js.map

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -13,14 +13,14 @@ model GuildConfig {
   modLogChannelId  String?
   welcomeChannelId String?
   goodbyeChannelId String?
-  staffRoleIds     String[] @default([])
-  moderatorRoleIds String[] @default([])
-  ignoredChannelIds String[] @default([])
-  ignoredRoleIds   String[] @default([])
-  ignoredUserIds   String[] @default([])
-  modules          Json     @default("{}")
-  automod          Json     @default("{}")
-  orders           Json     @default("{}")
+  staffRoleIds     String   @default("[]")
+  moderatorRoleIds String   @default("[]")
+  ignoredChannelIds String   @default("[]")
+  ignoredRoleIds   String   @default("[]")
+  ignoredUserIds   String   @default("[]")
+  modules          String   @default("{}")
+  automod          String   @default("{}")
+  orders           String   @default("{}")
   prefix           String   @default("!")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -42,7 +42,7 @@ model Case {
   resolvedById String?
   resolvedByTag String?
   resolvedAt   DateTime?
-  metadata     Json?
+  metadata     String?
   createdAt    DateTime @default(now())
 
   @@unique([guildId, caseNumber])
@@ -73,7 +73,7 @@ model FortressState {
   enabledById String?
   enabledByTag String?
   startedAt   DateTime?
-  snapshot    Json
+  snapshot    String
 }
 
 model Reminder {
@@ -94,7 +94,7 @@ model Poll {
   messageId String   @unique
   authorId  String
   question  String
-  options   Json
+  options   String
   endsAt    DateTime?
   createdAt DateTime @default(now())
 }
