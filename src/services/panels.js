@@ -157,19 +157,56 @@ export class PanelService {
         return embed;
     }
 
+    // Fallback defaults so dropdown always shows even before any TicketType rows exist
+    getFallbackTicketTypes(panelType) {
+        if (panelType === PANEL_TYPES.ORDER) return [
+            { key: "uniform", displayName: "Uniform", description: "Apparel / clothing designs", emoji: "👕", enabled: true },
+            { key: "livery", displayName: "Livery", description: "Vehicle wraps & liveries", emoji: "🚗", enabled: true },
+            { key: "gfx", displayName: "Graphics / GFX", description: "Banners, logos, gfx", emoji: "🎨", enabled: true },
+            { key: "botdev", displayName: "Bot Development", description: "Custom bot / tooling", emoji: "💻", enabled: true },
+            { key: "other", displayName: "Other", description: "Something else", emoji: "📦", enabled: true },
+        ];
+        if (panelType === PANEL_TYPES.ASSISTANCE) return [
+            { key: "general", displayName: "General Support", description: "General help", emoji: "🛠️", enabled: true },
+            { key: "staff", displayName: "Staff Assistance", description: "Contact staff", emoji: "👤", enabled: true },
+            { key: "designer_app", displayName: "Designer Application", description: "Apply as designer", emoji: "🎨", enabled: true },
+            { key: "report_designer", displayName: "Report a Designer", description: "Report issues", emoji: "⚠️", enabled: true },
+            { key: "report_member", displayName: "Report a Member", description: "Report a user", emoji: "🚨", enabled: true },
+            { key: "other", displayName: "Other", description: "Other request", emoji: "❓", enabled: true },
+        ];
+        return [];
+    }
+
+    async ensureDefaultTicketTypes(guildId, panelType) {
+        const existing = await this.prisma.ticketType.findMany({ where: { guildId, panelType } }).catch(() => []);
+        if (existing.length) return existing;
+        const fallbacks = this.getFallbackTicketTypes(panelType);
+        if (!fallbacks.length) return [];
+        const created = [];
+        for (const f of fallbacks) {
+            try {
+                const row = await this.prisma.ticketType.create({ data: { guildId, panelType, key: f.key, displayName: f.displayName, description: f.description, emoji: f.emoji, enabled: true, channelPrefix: f.key.slice(0,10) } });
+                created.push(row);
+            } catch {}
+        }
+        return created.length ? created : fallbacks;
+    }
+
     buildPanelComponents(panel, ticketTypes = []) {
         const cfg = panel.parsedConfig ?? {};
         const rows = [];
-        // Primary dropdown for ticket types (if any)
-        if ([PANEL_TYPES.ORDER, PANEL_TYPES.ASSISTANCE].includes(panel.panelType) && ticketTypes.length) {
-            const options = ticketTypes.filter((t) => t.enabled).slice(0, 25).map((t) => ({
-                label: t.displayName.slice(0, 100),
-                value: t.key.slice(0, 100),
+        // Primary dropdown for ticket types (if any) — always show fallback so panel never appears without dropdown
+        if ([PANEL_TYPES.ORDER, PANEL_TYPES.ASSISTANCE].includes(panel.panelType)) {
+            let types = ticketTypes.filter((t) => t.enabled);
+            if (!types.length) types = this.getFallbackTicketTypes(panel.panelType);
+            const options = types.slice(0, 25).map((t) => ({
+                label: String(t.displayName).slice(0, 100),
+                value: String(t.key).slice(0, 100),
                 description: (t.description ?? "").slice(0, 100) || undefined,
                 emoji: t.emoji ?? undefined,
             }));
             if (options.length) {
-                const placeholder = cfg.dropdownPlaceholder ?? "Choose an option";
+                const placeholder = cfg.dropdownPlaceholder ?? (panel.panelType === PANEL_TYPES.ORDER ? "Choose a service to order" : "Choose a request");
                 const menu = new StringSelectMenuBuilder().setCustomId(`angel:panel:select:${panel.panelType}`).setPlaceholder(placeholder.slice(0,150)).addOptions(options);
                 rows.push(new ActionRowBuilder().addComponents(menu));
             }
@@ -226,10 +263,13 @@ export class PanelService {
         const me = guild.members.me;
         if (!me?.permissionsIn(channel).has(PermissionFlagsBits.SendMessages) || !me.permissionsIn(channel).has(PermissionFlagsBits.EmbedLinks)) return { ok:false, reason:"Missing SendMessages/EmbedLinks in " + channel.name };
 
-        // Build embed/components
+        // Build embed/components — seed defaults if missing so dropdown always appears
         let ticketTypes = [];
         if ([PANEL_TYPES.ORDER, PANEL_TYPES.ASSISTANCE].includes(panelType)) {
             ticketTypes = await this.prisma.ticketType.findMany({ where:{ guildId:guild.id, panelType } }).catch(()=>[]);
+            if (!ticketTypes.length) {
+                ticketTypes = await this.ensureDefaultTicketTypes(guild.id, panelType);
+            }
         }
         const embed = this.buildPanelEmbed(panel, ticketTypes);
         const components = this.buildPanelComponents(panel, ticketTypes);

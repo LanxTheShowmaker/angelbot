@@ -29,14 +29,22 @@ export default {
             }
             if (interaction.isMessageComponent()) {
                 const handler = resolveComponent(client, interaction.customId);
-                if (handler)
+                if (handler) {
+                    logger.info("interaction", `component ${interaction.customId} by ${interaction.user.tag}`);
                     await handler(interaction);
+                } else {
+                    logger.warn("interaction", `no handler for ${interaction.customId}`);
+                }
                 return;
             }
             if (interaction.isModalSubmit()) {
                 const handler = resolveComponent(client, interaction.customId);
-                if (handler)
+                if (handler) {
+                    logger.info("interaction", `modal ${interaction.customId} by ${interaction.user.tag}`);
                     await handler(interaction);
+                } else {
+                    logger.warn("interaction", `no modal handler for ${interaction.customId}`);
+                }
             }
         }
         catch (e) {

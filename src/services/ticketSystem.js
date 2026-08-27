@@ -135,7 +135,20 @@ export class TicketSystemService {
             return interaction.reply({ embeds: [embeds.error("Access denied", "You are not allowed to open tickets.")], flags: 64 }).catch(()=>{});
         }
 
-        const type = await this.prisma.ticketType.findUnique({ where: { guildId_key: { guildId: guild.id, key } } }).catch(()=>null);
+        let type = await this.prisma.ticketType.findUnique({ where: { guildId_key: { guildId: guild.id, key } } }).catch(()=>null);
+        // Fallback: if DB has no types yet, auto-create from panel defaults (so dropdown always works)
+        if (!type) {
+            const fallbacks = this.client.services.panels ? this.client.services.panels.getFallbackTicketTypes(panelType) : [];
+            const fb = fallbacks.find((f)=>f.key===key);
+            if (fb) {
+                try {
+                    type = await this.prisma.ticketType.create({ data:{ guildId:guild.id, panelType, key: fb.key, displayName: fb.displayName, description: fb.description, emoji: fb.emoji, enabled:true, channelPrefix: fb.key.slice(0,10) } });
+                } catch (e) {
+                    // Race: try fetch again
+                    type = await this.prisma.ticketType.findUnique({ where:{ guildId_key:{ guildId:guild.id, key } } }).catch(()=>null);
+                }
+            }
+        }
         if (!type || !type.enabled) return interaction.reply({ embeds: [embeds.error("Not found", "This ticket type is not available.")], flags: 64 }).catch(()=>{});
 
         const can = await this.canOpen(guild, member.id, type);
