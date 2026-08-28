@@ -18,6 +18,8 @@ export default {
             jumpUrl: newMsg.url,
         })
             .catch(() => { });
+        // AutoMod edited message detection (conservative, deduplicate)
+        await client.services.automod.handleMessageUpdate(oldMsg, newMsg).catch(() => {});
     },
 };
 //# sourceMappingURL=messageUpdate.js.map
