@@ -154,19 +154,22 @@ export class AutomodService {
     }
     // Test/preview helpers
     async testMessage(guild, content, member) {
-        // Build a fake message-like object for detector dry run
+        const userMentions = (content.match(/<@!?(\d+)>/g) ?? []).length;
+        const roleMentions = (content.match(/<@&(\d+)>/g) ?? []).length;
         const fake = {
             content,
             guild,
             member,
             author: member.user,
-            channel: { id: guild.systemChannelId ?? "0" },
-            mentions: { users: new Map(), members: new Map(), roles: new Map() },
+            channel: { id: guild.systemChannelId ?? "0", parentId: null },
+            mentions: {
+                users: { size: userMentions },
+                members: { size: userMentions },
+                roles: { size: roleMentions },
+                everyone: content.includes("@everyone") || content.includes("@here"),
+            },
             deletable: false,
         };
-        // Approx mention counts from content
-        const userMentions = (content.match(/<@!?(\d+)>/g) ?? []).length;
-        fake.mentions.users.size = userMentions;
         return this.engine.handleMessage(fake, { dryRun: true });
     }
 }
