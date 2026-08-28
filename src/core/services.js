@@ -10,6 +10,14 @@ import { FortressService } from "../services/fortress.js";
 import { AssetService } from "../services/assets.js";
 import { PanelService } from "../services/panels.js";
 import { TicketSystemService } from "../services/ticketSystem.js";
+import { WelcomeService } from "../services/welcome.js";
+import { LevelingService } from "../services/leveling.js";
+import { ReactionRoleService } from "../services/reactionRoles.js";
+import { EconomyService } from "../services/economy.js";
+import { GiveawayService } from "../services/giveaways.js";
+import { SuggestionService } from "../services/suggestions.js";
+import { StarboardService } from "../services/starboard.js";
+import { AfkService } from "../services/afk.js";
 export function createServices(client) {
     const prisma = new PrismaClient();
     // SQLite hardening for multi-guild (global bot) — WAL + busy timeout
@@ -27,10 +35,18 @@ export function createServices(client) {
     const assets = new AssetService(client);
     const panels = new PanelService(prisma, client);
     const tickets = new TicketSystemService(prisma, client, settings, logging);
+    const welcome = new WelcomeService(prisma, client, settings);
+    const leveling = new LevelingService(prisma, client);
+    const reactionRoles = new ReactionRoleService(prisma, client);
+    const economy = new EconomyService(prisma, client);
+    const giveaways = new GiveawayService(prisma, client);
+    const suggestions = new SuggestionService(prisma, client);
+    const starboard = new StarboardService(prisma, client);
+    const afk = new AfkService(prisma, client);
     // Inject prisma into assets/panels that need it (assets needs settings, already has client)
     // Cross-wire assets with prisma for convenience
     client.prisma = prisma;
-    return { settings, cases, moderation, logging, automod, orders, fortress, utility, assets, panels, tickets, prisma };
+    return { settings, cases, moderation, logging, automod, orders, fortress, utility, assets, panels, tickets, welcome, leveling, reactionRoles, economy, giveaways, suggestions, starboard, afk, prisma };
 }
 export function isStaff(member, config) {
     if (member.permissions.has("Administrator") || member.permissions.has("ManageGuild"))
