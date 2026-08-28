@@ -276,9 +276,6 @@ export default {
         client.components.set("angel:automod:testModal", async (i)=>{
             if(!i.isModalSubmit()) return;
             const content = i.fields.getTextInputValue("content");
-            const fake = { content, guild: i.guild, member: i.member, author: i.user, channel: i.channel, mentions: { users: { size: (content.match(/<@!?(\d+)>/g)||[]).length }, members: { size:0 }, roles: { size: (content.match(/<@&(\d+)>/g)||[]).length } }, deletable:false };
-            // Add minimal fields for detectors
-            fake.mentions.users.size = (content.match(/<@!?(\d+)>/g)||[]).length;
             const res = await client.services.automod.testMessage(i.guild, content, i.member);
             const info = res?.violation ? `**YES** — ${res.violation.type} • ${res.violation.severity} • ${Math.round(res.violation.confidence*100)}% • ${res.action}` : "**NO** — would not trigger";
             await i.reply({ embeds:[embeds.info("Test result", info, [{ name:"Detector", value: res?.violation?.type ?? "—"}, { name:"Action", value: res?.action ?? "log"}])], flags: MessageFlags.Ephemeral }).catch(()=>{});
