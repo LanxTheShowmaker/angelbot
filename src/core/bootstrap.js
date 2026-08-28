@@ -18,8 +18,9 @@ async function main() {
             GatewayIntentBits.GuildBans,
             GatewayIntentBits.MessageContent,
             GatewayIntentBits.GuildVoiceStates,
+            GatewayIntentBits.GuildMessageReactions,
         ],
-        partials: [Partials.GuildMember, Partials.Message, Partials.Channel],
+        partials: [Partials.GuildMember, Partials.Message, Partials.Channel, Partials.Reaction],
     });
     client.services = createServices(client);
     client.commands = await loadCommands();
