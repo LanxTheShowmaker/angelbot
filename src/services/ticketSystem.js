@@ -243,32 +243,9 @@ export class TicketSystemService {
         else welcome.setThumbnail(member.user.displayAvatarURL({ size: 128 }));
         welcome.setColor(Theme.ticket);
 
-        const row1 = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId(`angel:ticket:claim:${channel.id}`).setLabel("Claim").setStyle(ButtonStyle.Success).setEmoji("🛠️"),
-            new ButtonBuilder().setCustomId(`angel:ticket:close:${channel.id}`).setLabel("Close").setStyle(ButtonStyle.Danger).setEmoji("🔒"),
-            new ButtonBuilder().setCustomId(`angel:ticket:info:${channel.id}`).setLabel("Info").setStyle(ButtonStyle.Secondary).setEmoji("ℹ️"),
-        );
-        const row2 = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId(`angel:ticket:add:${channel.id}`).setLabel("Add User").setStyle(ButtonStyle.Primary).setEmoji("➕"),
-            new ButtonBuilder().setCustomId(`angel:ticket:remove:${channel.id}`).setLabel("Remove").setStyle(ButtonStyle.Secondary).setEmoji("➖"),
-            new ButtonBuilder().setCustomId(`angel:ticket:transcript:${channel.id}`).setLabel("Transcript").setStyle(ButtonStyle.Secondary).setEmoji("📄"),
-        );
-        const priorityMenu = new StringSelectMenuBuilder().setCustomId(`angel:ticket:priority:${channel.id}`).setPlaceholder("Priority").addOptions([
-            { label:"Low", value: PRIORITY.LOW, emoji:"🟢" },
-            { label:"Normal", value: PRIORITY.NORMAL, emoji:"🟡" },
-            { label:"High", value: PRIORITY.HIGH, emoji:"🟠" },
-            { label:"Urgent", value: PRIORITY.URGENT, emoji:"🔴" },
-        ]);
-        const statusMenu = new StringSelectMenuBuilder().setCustomId(`angel:ticket:status:${channel.id}`).setPlaceholder("Status").addOptions([
-            { label:"Open", value: STATUS.OPEN, emoji:"🟡" },
-            { label:"Claimed", value: STATUS.CLAIMED, emoji:"🔵" },
-            { label:"Waiting", value: STATUS.WAITING, emoji:"🟠" },
-            { label:"In Progress", value: STATUS.IN_PROGRESS, emoji:"🟣" },
-            { label:"Completed", value: STATUS.COMPLETED, emoji:"🟢" },
-            { label:"Closed", value: STATUS.CLOSED, emoji:"🔴" },
-        ]);
-
-        await channel.send({ content: `<@${member.id}>`, embeds: [welcome], components: [row1, row2, new ActionRowBuilder().addComponents(priorityMenu), new ActionRowBuilder().addComponents(statusMenu)] }).catch(()=>{});
+        // Unclaim hidden until claimed — show Claim when unclaimed, Unclaim when claimed
+        const rows = this.buildTicketRows(channel.id, ticket);
+        await channel.send({ content: `<@${member.id}>`, embeds: [welcome], components: rows }).catch(()=>{});
 
         // Logging
         try {
@@ -278,6 +255,48 @@ export class TicketSystemService {
 
         // Auto-close timer if configured (e.g., type has cooldown? We'll use config stored in Panel? For now check TicketType config JSON)
         return ticket;
+    }
+
+    buildTicketRows(channelId, ticket) {
+        const isClaimed = !!ticket?.claimedById;
+        const row1 = new ActionRowBuilder().addComponents(
+            isClaimed
+                ? new ButtonBuilder().setCustomId(`angel:ticket:unclaim:${channelId}`).setLabel("Unclaim").setStyle(ButtonStyle.Secondary).setEmoji("↩️")
+                : new ButtonBuilder().setCustomId(`angel:ticket:claim:${channelId}`).setLabel("Claim").setStyle(ButtonStyle.Success).setEmoji("🛠️"),
+            new ButtonBuilder().setCustomId(`angel:ticket:close:${channelId}`).setLabel("Close").setStyle(ButtonStyle.Danger).setEmoji("🔒"),
+            new ButtonBuilder().setCustomId(`angel:ticket:info:${channelId}`).setLabel("Info").setStyle(ButtonStyle.Secondary).setEmoji("ℹ️"),
+        );
+        const row2 = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId(`angel:ticket:add:${channelId}`).setLabel("Add User").setStyle(ButtonStyle.Primary).setEmoji("➕"),
+            new ButtonBuilder().setCustomId(`angel:ticket:remove:${channelId}`).setLabel("Remove").setStyle(ButtonStyle.Secondary).setEmoji("➖"),
+            new ButtonBuilder().setCustomId(`angel:ticket:transcript:${channelId}`).setLabel("Transcript").setStyle(ButtonStyle.Secondary).setEmoji("📄"),
+        );
+        const priorityMenu = new StringSelectMenuBuilder().setCustomId(`angel:ticket:priority:${channelId}`).setPlaceholder("Priority").addOptions([
+            { label:"Low", value: PRIORITY.LOW, emoji:"🟢" },
+            { label:"Normal", value: PRIORITY.NORMAL, emoji:"🟡" },
+            { label:"High", value: PRIORITY.HIGH, emoji:"🟠" },
+            { label:"Urgent", value: PRIORITY.URGENT, emoji:"🔴" },
+        ]);
+        const statusMenu = new StringSelectMenuBuilder().setCustomId(`angel:ticket:status:${channelId}`).setPlaceholder("Status").addOptions([
+            { label:"Open", value: STATUS.OPEN, emoji:"🟡" },
+            { label:"Claimed", value: STATUS.CLAIMED, emoji:"🔵" },
+            { label:"Waiting", value: STATUS.WAITING, emoji:"🟠" },
+            { label:"In Progress", value: STATUS.IN_PROGRESS, emoji:"🟣" },
+            { label:"Completed", value: STATUS.COMPLETED, emoji:"🟢" },
+            { label:"Closed", value: STATUS.CLOSED, emoji:"🔴" },
+        ]);
+        return [row1, row2, new ActionRowBuilder().addComponents(priorityMenu), new ActionRowBuilder().addComponents(statusMenu)];
+    }
+
+    async updateTicketMessage(channel, ticket) {
+        try {
+            const msgs = await channel.messages.fetch({ limit: 20 }).catch(()=>null);
+            if (!msgs) return;
+            const welcome = [...msgs.values()].find(m => m.author.id === this.client.user.id && m.embeds.length && (m.embeds[0].title?.includes("New Ticket") || m.embeds[0].title?.includes("Ticket")));
+            if (!welcome) return;
+            const rows = this.buildTicketRows(channel.id, ticket);
+            await welcome.edit({ components: rows }).catch(()=>{});
+        } catch {}
     }
 
     // Ticket controls
@@ -290,15 +309,21 @@ export class TicketSystemService {
         const type = ticket.typeId ? await this.prisma.ticketType.findUnique({ where:{ id: ticket.typeId } }).catch(()=>null) : null;
         if (type && !type.allowClaim) return i.reply({ embeds:[embeds.warn("Claim disabled","Claiming disabled for this type")], flags:64 }).catch(()=>{});
         if (ticket.claimedById && ticket.claimedById !== i.user.id) return i.reply({ embeds:[embeds.warn("Claimed",`Already claimed by <@${ticket.claimedById}>`)], flags:64 }).catch(()=>{});
-        await this.prisma.ticket.update({ where:{ channelId }, data:{ claimedById: i.user.id, status: STATUS.CLAIMED } }).catch(()=>{});
+        const updated = await this.prisma.ticket.update({ where:{ channelId }, data:{ claimedById: i.user.id, status: STATUS.CLAIMED } }).catch(()=>null);
         await i.reply({ embeds:[embeds.success("Claimed",`You claimed this ticket`)], flags:64 }).catch(()=>{});
-        const ch = i.guild.channels.cache.get(channelId);
-        if (ch) await ch.send({ embeds:[embeds.info("Claimed", `<@${i.user.id}> claimed this ticket`)] }).catch(()=>{});
+        const ch = i.guild.channels.cache.get(channelId) ?? await i.guild.channels.fetch(channelId).catch(()=>null);
+        if (ch) {
+            await ch.send({ embeds:[embeds.info("Claimed", `<@${i.user.id}> claimed this ticket`)] }).catch(()=>{});
+            await this.updateTicketMessage(ch, updated ?? { ...ticket, claimedById: i.user.id, status: STATUS.CLAIMED });
+        }
     }
     async handleUnclaim(i) {
+        if (!i.isButton()) return;
         const channelId = i.customId.split(":")[3];
-        await this.prisma.ticket.update({ where:{ channelId }, data:{ claimedById: null, status: STATUS.OPEN } }).catch(()=>{});
+        const updated = await this.prisma.ticket.update({ where:{ channelId }, data:{ claimedById: null, status: STATUS.OPEN } }).catch(()=>null);
         await i.reply({ embeds:[embeds.success("Unclaimed","Ticket unclaimed")], flags:64 }).catch(()=>{});
+        const ch = i.guild.channels.cache.get(channelId) ?? await i.guild.channels.fetch(channelId).catch(()=>null);
+        if (ch) await this.updateTicketMessage(ch, updated ?? { claimedById: null, status: STATUS.OPEN });
     }
     async handleStatusSelect(i) {
         if (!i.isStringSelectMenu()) return;
