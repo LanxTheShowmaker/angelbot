@@ -166,3 +166,72 @@ model Ticket {
   @@index([guildId, openerId])
   @@index([guildId, status])
 }
+
+model Xp {
+  guildId   String
+  userId    String
+  xp        Int      @default(0)
+  level     Int      @default(0)
+  updatedAt DateTime @updatedAt
+  @@id([guildId, userId])
+  @@index([guildId, level])
+}
+
+model Economy {
+  guildId   String
+  userId    String
+  balance   Int      @default(0)
+  updatedAt DateTime @updatedAt
+  @@id([guildId, userId])
+}
+
+model ReactionRole {
+  id        String @id @default(uuid())
+  guildId   String
+  channelId String
+  messageId String
+  emoji     String
+  roleId    String
+  @@unique([guildId, messageId, emoji])
+  @@index([guildId])
+}
+
+model Giveaway {
+  id        String   @id @default(uuid())
+  guildId   String
+  channelId String
+  messageId String   @unique
+  prize     String
+  winners   Int      @default(1)
+  endsAt    DateTime
+  ended     Boolean  @default(false)
+  createdAt DateTime @default(now())
+  @@index([endsAt])
+}
+
+model Suggestion {
+  id        String   @id @default(uuid())
+  guildId   String
+  channelId String
+  messageId String   @unique
+  authorId  String
+  content   String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  @@index([guildId, status])
+}
+
+model StarboardConfig {
+  guildId   String @id
+  channelId String
+  threshold Int    @default(3)
+  emoji     String @default("⭐")
+}
+
+model Afk {
+  guildId   String
+  userId    String
+  reason    String?
+  since     DateTime @default(now())
+  @@id([guildId, userId])
+}
