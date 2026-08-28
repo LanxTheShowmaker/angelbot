@@ -12,10 +12,13 @@ import { PanelService } from "../services/panels.js";
 import { TicketSystemService } from "../services/ticketSystem.js";
 export function createServices(client) {
     const prisma = new PrismaClient();
-    // SQLite hardening for multi-guild (global bot) — WAL + busy timeout
+    // Pi 5 8GB + 500GB: 64MB cache, WAL, busy timeout, memory temp store
     prisma.$executeRawUnsafe("PRAGMA journal_mode=WAL;").catch(() => {});
     prisma.$executeRawUnsafe("PRAGMA busy_timeout=5000;").catch(() => {});
     prisma.$executeRawUnsafe("PRAGMA synchronous=NORMAL;").catch(() => {});
+    prisma.$executeRawUnsafe("PRAGMA cache_size=-64000;").catch(() => {});
+    prisma.$executeRawUnsafe("PRAGMA temp_store=MEMORY;").catch(() => {});
+    prisma.$executeRawUnsafe("PRAGMA mmap_size=268435456;").catch(() => {});
     const settings = new SettingsService(prisma);
     const cases = new CasesService(prisma);
     const logging = new LoggingService(prisma, client);
