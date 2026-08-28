@@ -17,7 +17,7 @@ const DEFAULT_CATEGORIES = [
 export default {
     data: new SlashCommandBuilder()
         .setName("order")
-        .setDescription("Design order system")
+        .setDescription("Design order system (legacy — use /setuptickets Orders)")
         .addSubcommand((s) => s.setName("panel").setDescription("Post the design-order panel with a Request Design button"))
         .addSubcommand((s) => s.setName("list").setDescription("List open design orders (staff)"))
         .addSubcommand((s) => s.setName("categories").setDescription("Manage design categories")
@@ -50,7 +50,8 @@ export default {
                 logger.error("orders", "panel send failed", e);
                 return interaction.editReply({ embeds: [embeds.error("Could not post panel", "I may be missing permission to send messages here.")] });
             }
-            return interaction.editReply({ embeds: [embeds.success("Panel posted", "The design-order panel was sent to this channel.")] });
+            await interaction.editReply({ embeds: [embeds.success("Panel posted", "The design-order panel was sent to this channel.")] });
+            return interaction.followUp({ embeds: [embeds.info("Heads up — Legacy", "This `/order` panel is **legacy**. For new servers, use `/setuptickets` → **Orders** panel (per-guild banners, ticket types, categories). Your existing tickets still work.", [], { footer: "A.N.G.E.L.  •  use /setuptickets Orders" })], ephemeral: true }).catch(()=>{});
         }
         if (sub === "list") {
             await interaction.deferReply({ ephemeral: true });
