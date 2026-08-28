@@ -1,6 +1,7 @@
 import { isIgnored } from "../core/services.js";
 import { embeds } from "../design/embeds.js";
 import { logger } from "../core/logger.js";
+import { AutomodEngine } from "../automod/engine.js";
 
 const OFFENSE_WINDOW_MS = 600_000;
 const ESCALATE_AFTER = 3;
@@ -24,6 +25,11 @@ const DEFAULTS = {
     clusterSpamThreshold: 3,
     clusterSpamWindowMs: 60000,
     autoLockdown: true,
+    // New modular defaults (extended)
+    confidenceThreshold: 0.65,
+    detectors: {},
+    escalation: null,
+    notifyUser: true,
 };
 
 const SCAM_PATTERNS = [
@@ -41,6 +47,8 @@ export class AutomodService {
     client;
     settings;
     logging;
+    engine;
+    // Keep legacy maps for compat (not used by engine but kept to avoid breaking external refs)
     spamMap = new Map();
     offenseMap = new Map();
     joinTimes = new Map();
@@ -51,34 +59,16 @@ export class AutomodService {
         this.client = client;
         this.settings = settings;
         this.logging = logging;
+        this.engine = new AutomodEngine(client, settings, logging, prisma);
     }
     resolveConfig(automod) {
-        const a = automod ?? {};
-        const num = (k, d) => (typeof a[k] === "number" ? a[k] : d);
-        const bool = (k, d) => (typeof a[k] === "boolean" ? a[k] : d);
-        return {
-            enabled: bool("enabled", DEFAULTS.enabled),
-            maxMentions: num("maxMentions", DEFAULTS.maxMentions),
-            spamThreshold: num("spamThreshold", DEFAULTS.spamThreshold),
-            spamWindowMs: num("spamWindowMs", DEFAULTS.spamWindowMs),
-            inviteFilter: bool("inviteFilter", DEFAULTS.inviteFilter),
-            linkFilter: bool("linkFilter", DEFAULTS.linkFilter),
-            raidJoinThreshold: num("raidJoinThreshold", DEFAULTS.raidJoinThreshold),
-            raidWindowMs: num("raidWindowMs", DEFAULTS.raidWindowMs),
-            newAccountFilter: bool("newAccountFilter", DEFAULTS.newAccountFilter),
-            newAccountMaxAgeDays: num("newAccountMaxAgeDays", DEFAULTS.newAccountMaxAgeDays),
-            emojiSpamThreshold: num("emojiSpamThreshold", DEFAULTS.emojiSpamThreshold),
-            zalgoFilter: bool("zalgoFilter", DEFAULTS.zalgoFilter),
-            scamUrlFilter: bool("scamUrlFilter", DEFAULTS.scamUrlFilter),
-            clusterSpam: bool("clusterSpam", DEFAULTS.clusterSpam),
-            clusterSpamThreshold: num("clusterSpamThreshold", DEFAULTS.clusterSpamThreshold),
-            clusterSpamWindowMs: num("clusterSpamWindowMs", DEFAULTS.clusterSpamWindowMs),
-            autoLockdown: bool("autoLockdown", DEFAULTS.autoLockdown),
-        };
+        // Delegate to engine for unified defaults
+        return this.engine.resolveConfig(automod);
     }
+    // Preserve legacy helpers for external callers
     isNewAccount(member, am) {
         const ageMs = Date.now() - (member.user.createdAt?.getTime?.() ?? 0);
-        return ageMs < am.newAccountMaxAgeDays * 86_400_000;
+        return ageMs < (am.newAccountMaxAgeDays ?? 7) * 86_400_000;
     }
     isZalgo(content) {
         const combining = (content.match(/\p{M}/gu) ?? []).length;
@@ -92,150 +82,41 @@ export class AutomodService {
     isScamUrl(content) {
         return SCAM_PATTERNS.some((re) => re.test(content));
     }
-    async handleMessage(message) {
-        const guild = message.guild;
-        const member = message.member;
-        if (!guild || !member)
-            return;
-        const config = await this.settings.get(guild.id).catch(() => null);
-        if (!config)
-            return;
-        const modules = config.modules ?? {};
-        if (modules.automod === false)
-            return;
-        if (isIgnored(member, config))
-            return;
-        if (config.ignoredChannelIds.includes(message.channel.id))
-            return;
-        const am = this.resolveConfig(config.automod);
-        if (!am.enabled)
-            return;
-        const content = message.content ?? "";
-        const mentionCount = Math.max(message.mentions.users.size, message.mentions.members?.size ?? 0);
-        if (mentionCount > am.maxMentions) {
-            await this.punish(message, `Too many mentions (${mentionCount} > ${am.maxMentions}).`, am);
-            return;
-        }
-        const inviteRe = /discord\.(gg|com\/invite)/i;
-        const linkRe = /https?:\/\//i;
-        if (am.inviteFilter && inviteRe.test(content)) {
-            await this.punish(message, "Discord invite links are not allowed.", am);
-            return;
-        }
-        if (am.linkFilter && linkRe.test(content) && !(am.inviteFilter && inviteRe.test(content))) {
-            await this.punish(message, "Links are not allowed in this server.", am);
-            return;
-        }
-        if (am.newAccountFilter && this.isNewAccount(member, am) && linkRe.test(content)) {
-            await this.punish(message, "New accounts cannot post links or invites yet. Please try again later.", am);
-            return;
-        }
-        if (am.zalgoFilter && this.isZalgo(content)) {
-            await this.punish(message, "Excessive text corruption (zalgo) is not allowed.", am);
-            return;
-        }
-        if (this.countEmojis(content) > am.emojiSpamThreshold) {
-            await this.punish(message, `Too many emojis (${this.countEmojis(content)} > ${am.emojiSpamThreshold}).`, am);
-            return;
-        }
-        if (am.scamUrlFilter && this.isScamUrl(content)) {
-            await this.punish(message, "That message looked like a scam link and was removed.", am, 2);
-            return;
-        }
-        if (am.clusterSpam && (await this.trackCluster(message, am)))
-            return;
-        await this.trackSpam(message, am);
+    async handleMessage(message, opts) {
+        // Modular engine: MESSAGE → NORMALIZE → DETECT → EXEMPT → ACTION → LOG → CASE
+        // opts.dryRun supported for preview/test
+        return this.engine.handleMessage(message, opts);
     }
-    async trackCluster(message, am) {
-        const raw = message.content.toLowerCase().replace(/\s+/g, " ").trim();
-        if (raw.length < 12)
-            return false;
-        const key = `${message.guild.id}:${raw}`;
-        const now = Date.now();
-        let entry = this.clusterMap.get(key);
-        if (!entry || now - entry.first > am.clusterSpamWindowMs)
-            entry = { ids: new Set(), first: now };
-        entry.ids.add(message.author.id);
-        this.clusterMap.set(key, entry);
-        if (entry.ids.size >= am.clusterSpamThreshold) {
-            this.clusterMap.delete(key);
-            await this.punish(message, `Duplicate spam detected across ${entry.ids.size} accounts.`, am);
-            return true;
-        }
-        return false;
+    async handleMessageUpdate(oldMsg, newMsg) {
+        // Edited message detection — evaluate edited content, deduplicate via content check
+        if (!newMsg.guild || !newMsg.member) return;
+        if (oldMsg?.content === newMsg.content) return;
+        // Avoid double-punish if same violation already handled within 30s
+        return this.engine.handleMessage(newMsg, { isEdit: true });
     }
-    async trackSpam(message, am) {
-        const guildId = message.guild?.id;
-        if (!guildId)
-            return;
-        const key = `${guildId}:${message.author.id}`;
-        const now = Date.now();
-        const entry = this.spamMap.get(key);
-        if (!entry || now - entry.firstTs > am.spamWindowMs) {
-            this.spamMap.set(key, { text: message.content, count: 1, firstTs: now });
-            return;
-        }
-        entry.count += 1;
-        if (entry.count >= am.spamThreshold) {
-            this.spamMap.delete(key);
-            await this.punish(message, `Sending messages too quickly (spam, ${am.spamThreshold} in ${am.spamWindowMs}ms).`, am);
-        }
-    }
+    // Keep old punish/track for compat — delegate to engine escalation
     async punish(message, reason, _am, weight = 1) {
-        if (message.deletable) {
-            await message.delete().catch((e) => logger.error("automod", "delete failed", e));
-        }
-        const member = message.member;
-        if (!member)
-            return;
-        try {
-            await member.send({ embeds: [embeds.warn("Automod", reason)] }).catch(() => { });
-        }
-        catch (e) {
-            logger.error("automod", "dm failed", e);
-        }
-        await this.trackOffense(member.guild, member, reason, weight);
+        // For legacy callers, use engine's execute path
+        return this.engine.executeAction(message, { type: "legacy", severity: "MEDIUM", confidence: 0.9, reason }, "delete", {});
     }
     async trackOffense(guild, member, reason, weight = 1) {
-        const key = `${guild.id}:${member.id}`;
-        const now = Date.now();
-        const existing = this.offenseMap.get(key);
-        if (!existing || now - existing.firstTs > OFFENSE_WINDOW_MS) {
-            this.offenseMap.set(key, { count: weight, firstTs: now });
-            return;
-        }
-        existing.count += weight;
-        if (existing.count > ESCALATE_AFTER) {
-            await this.escalate(guild, member, reason);
-        }
+        return this.engine.escalation.record(guild.id, member.id);
     }
     async escalate(guild, member, reason) {
-        try {
-            if (member.moderatable && guild.members.me?.permissions.has("ModerateMembers")) {
-                await member.disableCommunicationUntil(new Date(Date.now() + TIMEOUT_MS)).catch((e) => logger.error("automod", "timeout failed", e));
-            }
+        const am = this.resolveConfig((await this.settings.get(guild.id).catch(()=>null))?.automod);
+        const count = this.engine.escalation.getCount(guild.id, member.id);
+        const pick = this.engine.escalation.pickAction(count, am);
+        if (pick.action === "timeout") {
+            await member.disableCommunicationUntil(new Date(Date.now() + (pick.durationMs ?? 600000))).catch(()=>{});
         }
-        catch (e) {
-            logger.error("automod", "timeout failed", e);
-        }
-        try {
-            const wings = this.client;
-            if (wings.user) {
-                await wings.services.moderation.warn(guild, member, wings.user, `Automod: ${reason}`).catch((e) => logger.error("automod", "warn case failed", e));
-            }
-        }
-        catch (e) {
-            logger.error("automod", "warn case failed", e);
-        }
+        await this.engine.maybeCase(guild, member, { type:"escalation", severity:"HIGH", confidence:0.9, reason }, pick.action, count);
     }
     async handleJoin(member) {
         const guild = member.guild;
         const config = await this.settings.get(guild.id).catch(() => null);
-        if (!config)
-            return;
+        if (!config) return;
         const modules = config.modules ?? {};
-        if (modules.automod === false)
-            return;
+        if (modules.automod === false) return;
         const am = this.resolveConfig(config.automod);
         const now = Date.now();
         const arr = this.joinTimes.get(guild.id) ?? [];
@@ -249,11 +130,9 @@ export class AutomodService {
     }
     async sendRaidAlert(guild, config, count, am) {
         const id = config.modLogChannelId;
-        if (!id)
-            return;
+        if (!id) return;
         const channel = guild.channels.cache.get(id);
-        if (!channel)
-            return;
+        if (!channel) return;
         const now = Date.now();
         const last = this.raidCooldown.get(guild.id) ?? 0;
         if (now - last >= 60000) {
@@ -272,5 +151,22 @@ export class AutomodService {
         if (am.autoLockdown) {
             await this.client.services.fortress?.autoEnable(guild, config).catch((e) => logger.error("automod", "auto fortress failed", e));
         }
+    }
+    // Test/preview helpers
+    async testMessage(guild, content, member) {
+        // Build a fake message-like object for detector dry run
+        const fake = {
+            content,
+            guild,
+            member,
+            author: member.user,
+            channel: { id: guild.systemChannelId ?? "0" },
+            mentions: { users: new Map(), members: new Map(), roles: new Map() },
+            deletable: false,
+        };
+        // Approx mention counts from content
+        const userMentions = (content.match(/<@!?(\d+)>/g) ?? []).length;
+        fake.mentions.users.size = userMentions;
+        return this.engine.handleMessage(fake, { dryRun: true });
     }
 }
