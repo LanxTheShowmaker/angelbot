@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# A.N.G.E.L. — Seraph • Raspberry Pi 5 8GB / 500GB • All-in-One Setup
-# Branch: pi
-# Usage: chmod +x setup-pi.sh && ./setup-pi.sh
+# A.N.G.E.L. — Seraph • DIY at Home (Raspberry Pi 5 8GB / 500GB example) • All-in-One Setup
+# Branch: seraph — DIY at home (Pi 5 is a major supported target, not the branch name)
+# Usage: chmod +x setup-pi.sh && ./setup-pi.sh  # Pi-specific setup on seraph branch
 # Handles: Node 20, deps, .env, Prisma, deploy, pm2/systemd
 
 set -e

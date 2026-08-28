@@ -3,7 +3,7 @@
 > *Seraph* — highest order, for vessels with power to spare.
 > Same heavenly framework, unleashed for Pi 5 8GB with 500GB storage.
 
-**Branch:** `pi` — optimized for Raspberry Pi 5 (ARM64, 8GB, 500GB NVMe/SD).
+**Branch:** `seraph` — DIY at home (supports Raspberry Pi 5, mini PCs, desktops, NAS).
 
 **Why Pi 5 8GB is ideal:**
 - 8GB RAM → heap 4GB (`--max-old-space-size=4096`), keep all features, 100+ guilds easily
@@ -15,14 +15,14 @@
 - No feature cuts — Orders/Assistance/Regulations/Dashboard + automod + fortress all enabled
 - Recommended: run via `pm2` or `systemd` with auto-restart; `npm ci && npx prisma migrate deploy && npm start`
 
-**Pi deploy:**
+**Deploy (Raspberry Pi 5 example):**
 ```bash
-git clone -b pi https://github.com/LanxTheShowmaker/angelbot angel-pi
-cd angel-pi
+git clone -b seraph https://github.com/LanxTheShowmaker/angelbot angel-seraph
+cd angel-seraph
 npm ci
 cp .env.example .env  # set DISCORD_TOKEN, CLIENT_ID
 npx prisma migrate deploy
-npm run start:pi
+npm run start:pi   # Pi-specific heap 4GB (seraph branch)
 # or pm2: pm2 start src/core/bootstrap.js --name angel --max-memory-restart 4G
 ```
 
