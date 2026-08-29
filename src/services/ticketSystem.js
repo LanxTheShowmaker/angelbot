@@ -33,6 +33,34 @@ export class TicketSystemService {
         this.registerHandlers();
         // Auto-close interval (check every minute)
         setInterval(() => this.checkAutoClose().catch((e) => logger.error("tickets", "autoclose failed", e)), 60_000);
+        // Auto-deletion: archived tickets are deleted after delay, survives restart via DB polling
+        setInterval(() => this.checkDeletions().catch((e) => logger.error("tickets", "autodelete failed", e)), 60_000);
+        // Initial check 30s after startup (after client ready and guilds cached)
+        setTimeout(() => this.checkDeletions().catch(()=>{}), 30_000);
+    }
+    getDeletionDelayMs(guildId){
+        // Configurable via GuildConfig.orders.deletionDelayMs or Panel config; default 10 minutes
+        try{
+            // Try to read from settings cache synchronously? For now return default, but allow async override
+            // This is called from checkDeletions which is async, so we could fetch config there
+            return 10 * 60 * 1000;
+        }catch{ return 10 * 60 * 1000; }
+    }
+    async getDeletionDelayMsAsync(guildId){
+        try{
+            const cfg=await this.settings.get(guildId).catch(()=>null);
+            const orders=cfg?.orders || {};
+            if(typeof orders.deletionDelayMs==="number" && orders.deletionDelayMs>=60_000 && orders.deletionDelayMs<=7*24*3600*1000) return orders.deletionDelayMs;
+            // Also check panel config for archive delay
+            const panel=await this.prisma.panel.findUnique({ where:{ guildId_panelType:{ guildId, panelType:"ORDER" }}}).catch(()=>null);
+            if(panel){
+                try{
+                    const pc=JSON.parse(panel.config||"{}");
+                    if(typeof pc.deletionDelayMs==="number") return pc.deletionDelayMs;
+                }catch{}
+            }
+        }catch{}
+        return 10 * 60 * 1000;
     }
 
     registerHandlers() {
@@ -531,6 +559,53 @@ ${rows}
     async checkAutoClose() {
         // Simple: if Panel config has autoClose hours, close tickets older than that with no activity
         // For now, no-op — placeholder for production
+    }
+    async checkDeletions(){
+        // Find tickets that are CLOSED and archived, and whose closedAt + delay has passed, then delete channel
+        // This runs every 60s and on startup, so survives restarts
+        try{
+            const allClosed=await this.prisma.ticket.findMany({ where:{ status: STATUS.CLOSED, closedAt:{ not:null } }, take:50 }).catch(()=>[]);
+            const now=Date.now();
+            for(const t of allClosed){
+                if(!t.closedAt) continue;
+                const delay=await this.getDeletionDelayMsAsync(t.guildId).catch(()=> this.getDeletionDelayMs(t.guildId));
+                const deleteAt=new Date(t.closedAt).getTime() + delay;
+                if(now < deleteAt) continue; // not yet
+                // Check if channel still exists
+                const guild=this.client.guilds.cache.get(t.guildId);
+                if(!guild){
+                    // Guild not cached (bot maybe not in guild or not ready), skip and retry next cycle
+                    continue;
+                }
+                const ch=guild.channels.cache.get(t.channelId) ?? await guild.channels.fetch(t.channelId).catch(()=>null);
+                if(!ch){
+                    // Channel already deleted externally; clean up DB transcript flag but keep ticket row for history (don't delete row)
+                    // Optionally we could delete ticket row, but keep for audit; just mark transcript as deleted
+                    continue;
+                }
+                // Check permissions to delete
+                const me=guild.members.me;
+                if(!me?.permissions.has(PermissionFlagsBits.ManageChannels)){
+                    logger.warn("tickets",`cannot auto-delete ${t.channelId} — missing ManageChannels in ${guild.id}`);
+                    continue;
+                }
+                // Verify channel is archived (starts with archived- or is in archive category) to avoid premature deletion
+                const isArchived = ch.name.startsWith("archived-") || ch.parent?.name?.toLowerCase().includes("archive");
+                if(!isArchived){
+                    // Not yet archived via handleClose, skip (maybe still open or not properly closed)
+                    continue;
+                }
+                // Delete channel with audit reason
+                try{
+                    await ch.delete(`Auto-deletion after ${Math.round(delay/60000)}m — ticket ${t.id}`).catch(e=>{ throw e; });
+                    await this.client?.services?.audit?.log(t.guildId,{ action:"ticket_auto_delete", category:"tickets", details:{ channelId: t.channelId, ticketId: t.id }}).catch(()=>{});
+                    // Keep ticket row for history, but we could also delete it; keep for now
+                    logger.info("tickets",`auto-deleted archived ticket ${t.channelId} in ${t.guildId}`);
+                }catch(e){
+                    logger.error("tickets","auto-delete failed",e);
+                }
+            }
+        }catch(e){ logger.error("tickets","checkDeletions outer failed",e); }
     }
 
     // V5 intelligent ticket list: [category][user][id]
