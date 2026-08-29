@@ -2,7 +2,7 @@ import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { embeds } from "../../design/embeds.js";
 import { isStaff } from "../../core/services.js";
 export default {
-    data: new SlashCommandBuilder().setName("casenote").setDescription("Add note to case/user").addIntegerOption(o=>o.setName("case").setDescription("Case #")).addUserOption(o=>o.setName("user").setDescription("User")).addStringOption(o=>o.setName("content").setDescription("Note").setRequired(true)),
+    data: new SlashCommandBuilder().setName("casenote").setDescription("Add note to case/user").addStringOption(o=>o.setName("content").setDescription("Note").setRequired(true)).addIntegerOption(o=>o.setName("case").setDescription("Case #")).addUserOption(o=>o.setName("user").setDescription("User")),
     category:"Moderation",
     async execute(interaction){
         const cfg=await interaction.client.services.settings.get(interaction.guildId).catch(()=>null);
