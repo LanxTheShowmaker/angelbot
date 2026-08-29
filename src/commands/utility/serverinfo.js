@@ -1,0 +1,1 @@
+import info from "./info.js"; export default { data: { name:"serverinfo", description:"Server info", options:[] }, category:"Utility", async execute(i){ i.options={ getSubcommand:()=> "server", getString:()=>null, getUser:()=>null, getInteger:()=>null }; return info.execute(Object.assign(i,{ options:{ ...i.options, getSubcommand:()=> "server" }})); } };
