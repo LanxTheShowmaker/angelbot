@@ -1,9 +1,11 @@
 import { SlashCommandBuilder, MessageFlags, EmbedBuilder } from "discord.js";
 import { embeds } from "../../design/embeds.js";
+import { requireModerator } from "./shared.js";
 export default {
     data: new SlashCommandBuilder().setName("modhistory").setDescription("Moderation history for user").addUserOption(o=>o.setName("user").setDescription("User").setRequired(true)),
     category:"Moderation",
     async execute(interaction){
+        if(!(await requireModerator(interaction))) return;
         const user=interaction.options.getUser("user",true);
         const hist=await interaction.client.services.moderation.getUserHistory(interaction.guildId, user.id);
         const embed=new EmbedBuilder().setColor(0x9b8ecf).setAuthor({ name: user.tag, iconURL: user.displayAvatarURL()}).setDescription(`**${hist.total}** cases • ${hist.warns} warns`);

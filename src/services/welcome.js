@@ -8,9 +8,9 @@ export class WelcomeService {
     register() {
         this.client.components.set("angel:welcome:verify", async (i) => {
             const roleId = i.customId.split(":")[3];
-            if (!roleId) return i.reply({ content: "Verification role not set.", ephemeral: true }).catch(()=>{});
+            if (!roleId) return i.reply({ content: "Verification role not set.", flags: MessageFlags.Ephemeral }).catch(()=>{});
             const member = i.member;
-            try { await member.roles.add(roleId).catch(()=>{}); await i.reply({ content: `Verified — added <@&${roleId}>`, ephemeral: true }).catch(()=>{}); } catch(e){ logger.error("welcome","verify failed",e); await i.reply({ content:"Could not verify.", ephemeral:true }).catch(()=>{}); }
+            try { await member.roles.add(roleId).catch(()=>{}); await i.reply({ content: `Verified — added <@&${roleId}>`, flags: MessageFlags.Ephemeral }).catch(()=>{}); } catch(e){ logger.error("welcome","verify failed",e); await i.reply({ content:"Could not verify.", flags: MessageFlags.Ephemeral }).catch(()=>{}); }
         });
     }
     async handleJoin(member) {

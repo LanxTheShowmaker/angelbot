@@ -14,14 +14,14 @@ export default {
         const sub = interaction.options.getSubcommand();
         const config = await client.services.settings.get(interaction.guildId).catch(() => null);
         if (!isStaff(interaction.member, config)) {
-            return interaction.reply({ embeds: [embeds.error("Missing permission", "Only staff can control fortress mode.")], ephemeral: true });
+            return interaction.reply({ embeds: [embeds.error("Missing permission", "Only staff can control fortress mode.")], flags: MessageFlags.Ephemeral });
         }
         if (sub === "status") {
             const state = await client.services.fortress.getState(interaction.guild.id).catch(() => null);
-            return interaction.reply({ embeds: [client.services.fortress.statusEmbed(interaction.guild, state)], ephemeral: true });
+            return interaction.reply({ embeds: [client.services.fortress.statusEmbed(interaction.guild, state)], flags: MessageFlags.Ephemeral });
         }
         if (sub === "disable") {
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
             const result = await client.services.fortress.disable(interaction.guild).catch((e) => {
                 return { error: String(e) };
             });
@@ -34,7 +34,7 @@ export default {
             return interaction.editReply({ embeds: [embeds.success("Fortress stood down", "Channels have been restored to normal permissions.")] });
         }
         if (sub === "enable") {
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
             const state = await client.services.fortress.getState(interaction.guild.id).catch(() => null);
             if (state?.active) {
                 return interaction.editReply({ embeds: [embeds.warn("Already active", "Fortress mode is already enabled.")] });

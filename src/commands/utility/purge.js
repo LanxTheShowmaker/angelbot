@@ -9,7 +9,7 @@ export default {
         .setDescription("Delete recent messages (moderators only)")
         .addIntegerOption((o) => o.setName("count").setDescription("Number of messages (1-100)").setRequired(true).setMinValue(1).setMaxValue(100))
         .addUserOption((o) => o.setName("user").setDescription("Only delete messages from this user").setRequired(false)),
-    category: "Utility",
+    category: "Moderation",
     async execute(interaction) {
         if (!(await requireModerator(interaction)))
             return;
@@ -56,7 +56,7 @@ async function requireModerator(interaction) {
     const member = interaction.member;
     const config = await client.services.settings.get(interaction.guildId).catch(() => null);
     if (!isModerator(member, config)) {
-        await interaction.reply({ embeds: [embeds.error("Missing permission", "You need moderator permissions to use this.")], ephemeral: true });
+        await interaction.reply({ embeds: [embeds.error("Missing permission", "You need moderator permissions to use this.")], flags: MessageFlags.Ephemeral });
         return false;
     }
     return true;

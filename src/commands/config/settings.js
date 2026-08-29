@@ -35,9 +35,9 @@ export default {
         const member = interaction.member;
         const config = await client.services.settings.get(interaction.guildId).catch(() => null);
         if (!isStaff(member, config)) {
-            return interaction.reply({ embeds: [embeds.error("Missing permission", "Only staff can configure A.N.G.E.L.")], ephemeral: true });
+            return interaction.reply({ embeds: [embeds.error("Missing permission", "Only staff can configure A.N.G.E.L.")], flags: MessageFlags.Ephemeral });
         }
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         const cfg = await client.services.settings.get(interaction.guildId);
         client.components.set("wings:settings:menu", async (i) => {
             const category = i.values[0];
@@ -74,7 +74,7 @@ export default {
         client.components.set("wings:settings:prefix:modal", async (i) => {
             const prefix = i.fields.getTextInputValue("prefix");
             await client.services.settings.patch(i.guildId, { prefix });
-            await i.reply({ embeds: [embeds.success("Prefix updated", `Commands prefix set to \`${prefix}\`.`)], ephemeral: true });
+            await i.reply({ embeds: [embeds.success("Prefix updated", `Commands prefix set to \`${prefix}\`.`)], flags: MessageFlags.Ephemeral });
         });
         await interaction.editReply({ embeds: [mainEmbed(cfg)], components: [mainRow()] });
     },

@@ -69,19 +69,19 @@ export class UtilityService {
         const messageId = parts[3];
         const indexStr = parts[4];
         if (!messageId || indexStr === undefined) {
-            await interaction.reply({ embeds: [embeds.error("Invalid vote", "This poll is no longer valid.")], ephemeral: true });
+            await interaction.reply({ embeds: [embeds.error("Invalid vote", "This poll is no longer valid.")], flags: MessageFlags.Ephemeral });
             return;
         }
         const index = Number(indexStr);
         const userId = interaction.user.id;
         const poll = await this.prisma.poll.findUnique({ where: { messageId } }).catch(() => null);
         if (!poll) {
-            await interaction.reply({ embeds: [embeds.error("Poll ended", "This poll no longer exists.")], ephemeral: true });
+            await interaction.reply({ embeds: [embeds.error("Poll ended", "This poll no longer exists.")], flags: MessageFlags.Ephemeral });
             return;
         }
         const options = typeof poll.options === "string" ? JSON.parse(poll.options) : (poll.options ?? []);
         if (!Number.isInteger(index) || index < 0 || index >= options.length) {
-            await interaction.reply({ embeds: [embeds.error("Invalid option", "That option does not exist.")], ephemeral: true });
+            await interaction.reply({ embeds: [embeds.error("Invalid option", "That option does not exist.")], flags: MessageFlags.Ephemeral });
             return;
         }
         let voters = this.pollVoters.get(messageId);
@@ -90,7 +90,7 @@ export class UtilityService {
             this.pollVoters.set(messageId, voters);
         }
         if (voters.has(userId)) {
-            await interaction.reply({ embeds: [embeds.warn("Already voted", "You have already voted in this poll.")], ephemeral: true });
+            await interaction.reply({ embeds: [embeds.warn("Already voted", "You have already voted in this poll.")], flags: MessageFlags.Ephemeral });
             return;
         }
         voters.add(userId);
@@ -100,7 +100,7 @@ export class UtilityService {
         if (message?.editable) {
             await message.edit({ embeds: [this.buildPollEmbed(poll.question, options)] }).catch(() => { });
         }
-        await interaction.reply({ embeds: [embeds.success("Vote recorded", `You voted for **${options[index].label}**.`)], ephemeral: true });
+        await interaction.reply({ embeds: [embeds.success("Vote recorded", `You voted for **${options[index].label}**.`)], flags: MessageFlags.Ephemeral });
     }
     buildPollButtons(messageId, options) {
         const wrap = (start, end) => {
