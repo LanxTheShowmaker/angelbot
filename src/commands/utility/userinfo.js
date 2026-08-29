@@ -1,0 +1,1 @@
+import whois from "./whois.js"; export default whois;

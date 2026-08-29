@@ -1,0 +1,1 @@
+import diagnostics from "./diagnostics.js"; export default { data: diagnostics.data, category:"Utility", async execute(i){ i.options={ getSubcommand:()=> "health", getString:()=>null, getInteger:()=>null }; return diagnostics.execute(i); } };
