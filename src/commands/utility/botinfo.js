@@ -6,11 +6,11 @@ export default {
     category:"Utility",
     async execute(interaction){
         const bot = interaction.client.user;
-        const embed = embeds.panel(`Γ£ª  ${bot.username}`, `*Heavenly service ΓÇö crafted with grace, deployed with power.*`, [
-            { name:"  Version", value:`> \`${interaction.client.guilds.cache.size} guilds\` ΓÇó \`Node ${process.version}\` ΓÇó \`d.js ${djsv}\``, inline:false },
-            { name:"  Branches", value:"> `master` FULL SELF-HOSTED ΓÇó `cherub` ULTRA-LIGHT ΓÇó `seraph` DIY AT HOME", inline:true },
+        const embed = embeds.panel(`✦  ${bot.username}`, `*Heavenly service — crafted with grace, deployed with power.*`, [
+            { name:"  Version", value:`> \`${interaction.client.guilds.cache.size} guilds\` • \`Node ${process.version}\` • \`d.js ${djsv}\``, inline:false },
+            { name:"  Branches", value:"> `master` FULL SELF-HOSTED • `cherub` ULTRA-LIGHT • `seraph` DIY AT HOME", inline:true },
             { name:"  Uptime", value:`> <t:${Math.floor((Date.now()-interaction.client.uptime)/1000)}:R>`, inline:true },
-        ], { author:{ name:`A.N.G.E.L. ΓÇó Bot Info`, iconURL: bot.displayAvatarURL() }, footer:`A.N.G.E.L. ΓÇó heavenly`});
+        ], { author:{ name:`A.N.G.E.L. • Bot Info`, iconURL: bot.displayAvatarURL() }, footer:`A.N.G.E.L. • heavenly`});
         embed.setThumbnail(bot.displayAvatarURL({ size:256 }));
         embed.setColor(Theme.panel);
         await interaction.reply({ embeds:[embed], flags: MessageFlags.Ephemeral }).catch(()=>{});
