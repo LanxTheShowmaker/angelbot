@@ -1,1 +1,10 @@
-import info from "./info.js"; export default { data: { name:"serverinfo", description:"Server info", options:[] }, category:"Utility", async execute(i){ i.options={ getSubcommand:()=> "server", getString:()=>null, getUser:()=>null, getInteger:()=>null }; return info.execute(Object.assign(i,{ options:{ ...i.options, getSubcommand:()=> "server" }})); } };
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
+import info from "./info.js";
+export default {
+    data: new SlashCommandBuilder().setName("serverinfo").setDescription("Show server info (alias to /info server)"),
+    category:"Utility",
+    async execute(interaction){
+        const fake={ ...interaction, options:{ ...interaction.options, getSubcommand:()=> "server", getString:()=>null, getUser:()=>null, getInteger:()=>null, getChannel:()=>null } };
+        return info.execute(fake);
+    }
+};
