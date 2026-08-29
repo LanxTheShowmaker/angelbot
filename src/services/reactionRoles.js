@@ -13,8 +13,8 @@ export class ReactionRoleService {
             try{
                 if(member.roles.cache.has(roleId)) await member.roles.remove(roleId).catch(()=>{});
                 else await member.roles.add(roleId).catch(()=>{});
-                await i.reply({ content:`Toggled <@&${roleId}>`, ephemeral:true }).catch(()=>{});
-            }catch(e){ logger.error("rr","toggle failed",e); await i.reply({ content:"Failed.", ephemeral:true }).catch(()=>{}); }
+                await i.reply({ content:`Toggled <@&${roleId}>`, flags: MessageFlags.Ephemeral }).catch(()=>{});
+            }catch(e){ logger.error("rr","toggle failed",e); await i.reply({ content:"Failed.", flags: MessageFlags.Ephemeral }).catch(()=>{}); }
         });
         this.client.components.set("angel:rr:button", async (i)=>{
             const roleId = i.customId.split(":")[3];
@@ -22,8 +22,8 @@ export class ReactionRoleService {
             try{
                 if(mem.roles.cache.has(roleId)) await mem.roles.remove(roleId);
                 else await mem.roles.add(roleId);
-                await i.reply({ content:`Toggled <@&${roleId}>`, ephemeral:true }).catch(()=>{});
-            }catch(e){ await i.reply({ content:"Failed.", ephemeral:true }).catch(()=>{}); }
+                await i.reply({ content:`Toggled <@&${roleId}>`, flags: MessageFlags.Ephemeral }).catch(()=>{});
+            }catch(e){ await i.reply({ content:"Failed.", flags: MessageFlags.Ephemeral }).catch(()=>{}); }
         });
     }
     async createPanel(guild, channel, title, mappings){ // mappings [{emoji,roleId,label}]

@@ -44,12 +44,10 @@ export async function loadCommandsWithDiagnostics() {
     const branch=getBranch();
     const dir=path.join(here, "..", "commands");
     const files = await walk(dir);
-    // Filter out non-command helpers (shared.js, etc.)
+    // Filter out non-command helpers
     const commandFiles=files.filter(f=>{
         const base=path.basename(f);
         if(base==="shared.js") return false;
-        if(base==="cases.js" && f.includes("moderation")) return false; // moderation/cases.js is helper? Actually src/commands/moderation/cases.js is a command, keep
-        // Keep all other .js, but will be validated via data.name
         return true;
     });
     const discovered=commandFiles.length;

@@ -6,7 +6,7 @@ export class GiveawayService {
     constructor(prisma, client){ this.prisma=prisma; this.client=client; this.register(); this.tick(); setInterval(()=>this.tick().catch(e=>logger.error("giveaway","tick",e)), 15000); }
     register(){
         this.client.components.set("angel:giveaway:enter", async (i)=>{
-            await i.reply({ content:"Entered — good luck!", ephemeral:true }).catch(()=>{});
+            await i.reply({ content:"Entered — good luck!", flags: MessageFlags.Ephemeral }).catch(()=>{});
             // Entry tracking via reaction not needed for MVP — winners picked from reactors
         });
     }
