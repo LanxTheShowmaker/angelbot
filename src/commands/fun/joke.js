@@ -9,7 +9,7 @@ const jokes=[
     "I would tell you a UDP joke, but you might not get it.",
 ];
 export default {
-    data: new SlashCommandBuilder().setName("joke").setDescription("Random heavenly joke"),
+    data: new SlashCommandBuilder().setName("joke").setDescription("Random joke"),
     category:"Fun",
     async execute(interaction){
         const j = jokes[Math.floor(Math.random()*jokes.length)];

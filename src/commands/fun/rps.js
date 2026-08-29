@@ -9,7 +9,7 @@ export default {
             new ButtonBuilder().setCustomId(`rps:${interaction.id}:paper`).setLabel("Paper").setStyle(ButtonStyle.Secondary).setEmoji("📄"),
             new ButtonBuilder().setCustomId(`rps:${interaction.id}:scissors`).setLabel("Scissors").setStyle(ButtonStyle.Secondary).setEmoji("✂️"),
         );
-        const embed = embeds.panel("✦  Rock • Paper • Scissors", `*Choose your move — best of one, heavenly stakes.*`, [], { footer:`A.N.G.E.L. • make your choice`});
+        const embed = embeds.panel("✦  Rock • Paper • Scissors", `*Choose your move — best of one, .*`, [], { footer:`A.N.G.E.L. • make your choice`});
         await interaction.reply({ embeds:[embed], components:[row], flags: MessageFlags.Ephemeral }).catch(()=>{});
         const client = interaction.client;
         const key = `rps:${interaction.id}`;

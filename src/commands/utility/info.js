@@ -15,7 +15,7 @@ export default {
         const guild = interaction.guild;
         if (sub === "server") {
             await interaction.deferReply({ flags: MessageFlags.Ephemeral }).catch(() => {});
-            const e = embeds.panel(`✦  ${guild.name}`, `*Heavenly home for **${guild.memberCount}** souls.*`, [
+            const e = embeds.panel(`✦  ${guild.name}`, `*Server information.*`, [
                 { name: "  ID", value: `\`${guild.id}\``, inline: true },
                 { name: "  Owner", value: `<@${guild.ownerId}>`, inline: true },
                 { name: "  Members", value: `> **${guild.memberCount}**`, inline: true },
