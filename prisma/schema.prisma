@@ -185,6 +185,31 @@ model Economy {
   @@id([guildId, userId])
 }
 
+model ShopItem {
+  id          String   @id @default(uuid())
+  guildId     String
+  name        String
+  description String?
+  price       Int
+  roleId      String?
+  emoji       String?
+  stock       Int?
+  createdAt   DateTime @default(now())
+  @@unique([guildId, name])
+  @@index([guildId])
+}
+
+model ShopInventory {
+  id          String   @id @default(uuid())
+  guildId     String
+  userId      String
+  itemId      String
+  quantity    Int      @default(1)
+  purchasedAt DateTime @default(now())
+  @@index([guildId, userId])
+  @@unique([guildId, userId, itemId])
+}
+
 model ReactionRole {
   id        String @id @default(uuid())
   guildId   String
