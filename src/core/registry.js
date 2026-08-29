@@ -16,10 +16,34 @@ async function walk(dir) {
     }
     return out;
 }
+function getBranch(){
+    try{
+        const head=fs.readFileSync(path.join(process.cwd(),".git","HEAD"),"utf8").trim();
+        // head is like "ref: refs/heads/cherub"
+        const m=head.match(/refs\/heads\/(.+)/);
+        if(m) return m[1];
+    }catch{}
+    if(fs.existsSync(path.join(process.cwd(),"index.js")) && fs.existsSync(path.join(process.cwd(),"README_CHERUB.md"))) return "cherub";
+    if(fs.existsSync(path.join(process.cwd(),"setup-pi.sh"))) return "seraph";
+    return "master";
+}
+function isHeavyCommand(file){
+    // Heavy features that cherub (320MB/1GB) should skip to save RAM/disk — keep essentials
+    const heavy=["analytics","automation","audit","backup","intelligence"];
+    const base=path.basename(file).replace(".js","");
+    // Also filter analytics_extra / audit_extra but keep diagnostics/health/status for troubleshooting
+    if(base==="analytics_extra" || base==="audit_extra") return true;
+    return heavy.some(h=> base===h || file.includes(`/analytics/`) || file.includes(`/automation/`));
+}
 export async function loadCommands() {
     const commands = new Collection();
+    const branch=getBranch();
     const files = await walk(path.join(here, "..", "commands"));
     for (const file of files) {
+        // Cherub: skip heavy commands to preserve 256MB heap / 1GB disk
+        if(branch==="cherub" && isHeavyCommand(file)){
+            continue;
+        }
         const mod = await import(pathToFileURL(file).href);
         const cmd = mod.default ?? mod;
         if (cmd?.data?.name)
