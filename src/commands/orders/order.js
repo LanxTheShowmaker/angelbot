@@ -35,10 +35,10 @@ export default {
         const sub = interaction.options.getSubcommand();
         const config = await client.services.settings.get(interaction.guildId).catch(() => null);
         if (!isStaff(interaction.member, config)) {
-            return interaction.reply({ embeds: [embeds.error("Missing permission", "Only staff can use order management.")], ephemeral: true });
+            return interaction.reply({ embeds: [embeds.error("Missing permission", "Only staff can use order management.")], flags: MessageFlags.Ephemeral });
         }
         if (sub === "panel") {
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
             const service = client.services.orders;
             try {
                 await interaction.channel.send({
@@ -51,10 +51,10 @@ export default {
                 return interaction.editReply({ embeds: [embeds.error("Could not post panel", "I may be missing permission to send messages here.")] });
             }
             await interaction.editReply({ embeds: [embeds.success("Panel posted", "The design-order panel was sent to this channel.")] });
-            return interaction.followUp({ embeds: [embeds.info("Heads up — Legacy", "This `/order` panel is **legacy**. For new servers, use `/setuptickets` → **Orders** panel (per-guild banners, ticket types, categories). Your existing tickets still work.", [], { footer: "A.N.G.E.L.  •  use /setuptickets Orders" })], ephemeral: true }).catch(()=>{});
+            return interaction.followUp({ embeds: [embeds.info("Heads up — Legacy", "This `/order` panel is **legacy**. For new servers, use `/setuptickets` → **Orders** panel (per-guild banners, ticket types, categories). Your existing tickets still work.", [], { footer: "A.N.G.E.L.  •  use /setuptickets Orders" })], flags: MessageFlags.Ephemeral }).catch(()=>{});
         }
         if (sub === "list") {
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
             const orders = await client.services.orders.listOpen(interaction.guild).catch(() => []);
             if (!orders.length) {
                 return interaction.editReply({ embeds: [embeds.info("Open orders", "There are no open design orders right now.")] });
@@ -73,33 +73,33 @@ export default {
         const cats = (current.orders?.categories ?? DEFAULT_CATEGORIES).slice();
         if (action === "list") {
             const list = cats.map((c) => `**${c.label}** (\`${c.value}\`) — ${c.description}`).join("\n");
-            return interaction.reply({ embeds: [embeds.info("Design categories", list || "*(none)*")], ephemeral: true });
+            return interaction.reply({ embeds: [embeds.info("Design categories", list || "*(none)*")], flags: MessageFlags.Ephemeral });
         }
         if (action === "add") {
             const value = interaction.options.getString("value");
             const label = interaction.options.getString("label");
             const description = interaction.options.getString("description") ?? "";
             if (!value || !label) {
-                return interaction.reply({ embeds: [embeds.error("Missing fields", "Provide `value` and `label` to add a category.")], ephemeral: true });
+                return interaction.reply({ embeds: [embeds.error("Missing fields", "Provide `value` and `label` to add a category.")], flags: MessageFlags.Ephemeral });
             }
             if (cats.some((c) => c.value === value)) {
-                return interaction.reply({ embeds: [embeds.warn("Already exists", `Category \`${value}\` already exists.`)], ephemeral: true });
+                return interaction.reply({ embeds: [embeds.warn("Already exists", `Category \`${value}\` already exists.`)], flags: MessageFlags.Ephemeral });
             }
             cats.push({ value, label, description });
             await settings.patch(interaction.guildId, { orders: { categories: cats } });
-            return interaction.reply({ embeds: [embeds.success("Category added", `Added **${label}** (\`${value}\`).`)], ephemeral: true });
+            return interaction.reply({ embeds: [embeds.success("Category added", `Added **${label}** (\`${value}\`).`)], flags: MessageFlags.Ephemeral });
         }
         if (action === "remove") {
             const value = interaction.options.getString("value");
             if (!value) {
-                return interaction.reply({ embeds: [embeds.error("Missing field", "Provide `value` to remove a category.")], ephemeral: true });
+                return interaction.reply({ embeds: [embeds.error("Missing field", "Provide `value` to remove a category.")], flags: MessageFlags.Ephemeral });
             }
             const next = cats.filter((c) => c.value !== value);
             if (next.length === cats.length) {
-                return interaction.reply({ embeds: [embeds.warn("Not found", `No category \`${value}\`.`)], ephemeral: true });
+                return interaction.reply({ embeds: [embeds.warn("Not found", `No category \`${value}\`.`)], flags: MessageFlags.Ephemeral });
             }
             await settings.patch(interaction.guildId, { orders: { categories: next } });
-            return interaction.reply({ embeds: [embeds.success("Category removed", `Removed \`${value}\`.`)], ephemeral: true });
+            return interaction.reply({ embeds: [embeds.success("Category removed", `Removed \`${value}\`.`)], flags: MessageFlags.Ephemeral });
         }
     },
 };

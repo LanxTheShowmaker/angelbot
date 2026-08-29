@@ -1,4 +1,4 @@
-import { ComponentType } from "discord.js";
+import { ComponentType, MessageFlags } from "discord.js";
 import { embeds, confirmationRow } from "../../design/embeds.js";
 import { isModerator } from "../../core/services.js";
 export async function requireModerator(interaction) {
@@ -6,14 +6,14 @@ export async function requireModerator(interaction) {
     const member = interaction.member;
     const config = await client.services.settings.get(interaction.guildId).catch(() => null);
     if (!isModerator(member, config)) {
-        await interaction.reply({ embeds: [embeds.error("Missing permission", "You need moderator permissions or a moderator role to use this.")], ephemeral: true });
+        await interaction.reply({ embeds: [embeds.error("Missing permission", "You need moderator permissions or a moderator role to use this.")], flags: MessageFlags.Ephemeral });
         return false;
     }
     return true;
 }
 export async function defer(interaction, ephemeral = true) {
     if (!interaction.deferred && !interaction.replied)
-        await interaction.deferReply({ ephemeral });
+        await interaction.deferReply({ flags: ephemeral ? MessageFlags.Ephemeral : undefined });
 }
 export async function confirmDestructive(interaction, label) {
     const acceptId = `wings:confirm:${interaction.id}:yes`;

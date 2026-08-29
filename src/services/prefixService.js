@@ -134,16 +134,20 @@ export class PrefixService {
         // Handle subcommand: e.g., "ticket close" -> cmdName="ticket", subcommand="close"
         let subcommand = null;
         const slashCmd = this.client.commands.get(cmdName);
-        if (slashCmd && slashCmd.data?.options?.some(o => o.type === 1)) {
-            // Has subcommands, check if next arg is a subcommand
-            if (args.length > 0) {
-                const maybeSub = args[0].toLowerCase();
-                const hasSub = slashCmd.data.options.some(o => o.type === 1 && o.name === maybeSub);
-                if (hasSub) {
-                    subcommand = maybeSub;
-                    args = args.slice(1);
+        if (slashCmd) {
+            try{
+                const jsonOpts = slashCmd.data.toJSON().options || [];
+                if (jsonOpts.some(o => o.type === 1)) {
+                    if (args.length > 0) {
+                        const maybeSub = args[0].toLowerCase();
+                        const hasSub = jsonOpts.some(o => o.type === 1 && o.name === maybeSub);
+                        if (hasSub) {
+                            subcommand = maybeSub;
+                            args = args.slice(1);
+                        }
+                    }
                 }
-            }
+            }catch{}
         }
 
         // Resolve command

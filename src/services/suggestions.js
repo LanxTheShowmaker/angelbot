@@ -7,19 +7,19 @@ export class SuggestionService {
     register(){
         this.client.components.set("angel:suggest:up", async (i)=>{
             const mid=i.customId.split(":")[3];
-            await i.reply({ content:"Upvoted!", ephemeral:true }).catch(()=>{});
+            await i.reply({ content:"Upvoted!", flags: MessageFlags.Ephemeral }).catch(()=>{});
         });
         this.client.components.set("angel:suggest:approve", async (i)=>{
-            if(!i.member.permissions.has("ManageGuild")) return i.reply({ content:"No perm.", ephemeral:true }).catch(()=>{});
+            if(!i.member.permissions.has("ManageGuild")) return i.reply({ content:"No perm.", flags: MessageFlags.Ephemeral }).catch(()=>{});
             const mid=i.customId.split(":")[3];
             await this.prisma.suggestion.update({ where:{ messageId:mid }, data:{ status:"APPROVED" }}).catch(()=>{});
-            await i.reply({ content:"Approved.", ephemeral:true }).catch(()=>{});
+            await i.reply({ content:"Approved.", flags: MessageFlags.Ephemeral }).catch(()=>{});
         });
         this.client.components.set("angel:suggest:deny", async (i)=>{
             if(!i.member.permissions.has("ManageGuild")) return;
             const mid=i.customId.split(":")[3];
             await this.prisma.suggestion.update({ where:{ messageId:mid }, data:{ status:"DENIED" }}).catch(()=>{});
-            await i.reply({ content:"Denied.", ephemeral:true }).catch(()=>{});
+            await i.reply({ content:"Denied.", flags: MessageFlags.Ephemeral }).catch(()=>{});
         });
     }
     async create(guild, channel, author, content){

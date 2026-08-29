@@ -103,7 +103,7 @@ export class OrderService {
         if (existing) {
             await i.reply({
                 embeds: [embeds.warn("Order already open", `You already have an order at <#${existing.channelId}>.`)],
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }
@@ -115,7 +115,7 @@ export class OrderService {
         await i.reply({
             embeds: [embeds.info("New design order", "Select the type of design you want commissioned.")],
             components: [new ActionRowBuilder().addComponents(menu)],
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
     async handleCategorySelect(i) {
@@ -164,7 +164,7 @@ export class OrderService {
         const deadline = this.parseDeadline(deadlineRaw);
         const guild = i.guild;
         const opener = i.member;
-        await i.deferReply({ ephemeral: true });
+        await i.deferReply({ flags: MessageFlags.Ephemeral });
         try {
             const order = await this.createOrder({ guild, opener, category, description, budget, deadline, references });
             await i.editReply({
@@ -356,21 +356,21 @@ export class OrderService {
         const member = i.member;
         const config = await this.settings.get(i.guild.id).catch(() => null);
         if (!this.isStaffMember(member, config)) {
-            await i.reply({ embeds: [embeds.error("Missing permission", "Only staff can claim orders.")], ephemeral: true });
+            await i.reply({ embeds: [embeds.error("Missing permission", "Only staff can claim orders.")], flags: MessageFlags.Ephemeral });
             return;
         }
         const order = await this.fetchOrder(channelId);
         if (!order || order.status === "CLOSED") {
-            await i.reply({ embeds: [embeds.warn("Order unavailable", "This order is not open.")], ephemeral: true });
+            await i.reply({ embeds: [embeds.warn("Order unavailable", "This order is not open.")], flags: MessageFlags.Ephemeral });
             return;
         }
         if (order.claimedById && order.claimedById !== member.id) {
-            await i.reply({ embeds: [embeds.warn("Already claimed", "Another designer already claimed this order.")], ephemeral: true });
+            await i.reply({ embeds: [embeds.warn("Already claimed", "Another designer already claimed this order.")], flags: MessageFlags.Ephemeral });
             return;
         }
         const updated = await this.prisma.order.update({ where: { channelId }, data: { claimedById: member.id, status: "CLAIMED" } });
         await this.refreshIntro(i.guild, updated);
-        await i.reply({ embeds: [embeds.success("Order claimed", `You claimed this order.`)], ephemeral: true });
+        await i.reply({ embeds: [embeds.success("Order claimed", `You claimed this order.`)], flags: MessageFlags.Ephemeral });
         await i.guild.channels.cache.get(channelId)?.send({ embeds: [embeds.info("Designer assigned", `<@${member.id}> claimed this order and will begin work.`)] }).catch(() => { });
     }
     async handleStatus(i) {
@@ -382,13 +382,13 @@ export class OrderService {
         const member = i.member;
         const config = await this.settings.get(i.guild.id).catch(() => null);
         if (!this.isStaffMember(member, config)) {
-            await i.reply({ embeds: [embeds.error("Missing permission", "Only staff can update order status.")], ephemeral: true });
+            await i.reply({ embeds: [embeds.error("Missing permission", "Only staff can update order status.")], flags: MessageFlags.Ephemeral });
             return;
         }
         const next = i.values[0];
         const order = await this.fetchOrder(channelId);
         if (!order || order.status === "CLOSED") {
-            await i.reply({ embeds: [embeds.warn("Order unavailable", "This order is not open.")], ephemeral: true });
+            await i.reply({ embeds: [embeds.warn("Order unavailable", "This order is not open.")], flags: MessageFlags.Ephemeral });
             return;
         }
         if (next === "CLOSED") {
@@ -402,13 +402,13 @@ export class OrderService {
                         danger: true,
                     }),
                 ],
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }
         const updated = await this.prisma.order.update({ where: { channelId }, data: { status: next } });
         await this.refreshIntro(i.guild, updated);
-        await i.reply({ embeds: [embeds.success("Status updated", `Order status set to **${STATUS_LABELS[next]}**.`)], ephemeral: true });
+        await i.reply({ embeds: [embeds.success("Status updated", `Order status set to **${STATUS_LABELS[next]}**.`)], flags: MessageFlags.Ephemeral });
         const channel = i.guild.channels.cache.get(channelId);
         if (channel)
             await channel.send({ embeds: [embeds.info("Status update", `<@${order.openerId}> — your order status is now **${STATUS_LABELS[next]}**.`)] }).catch(() => { });
@@ -433,7 +433,7 @@ export class OrderService {
         }
         const order = await this.fetchOrder(channelId);
         if (!order || order.status === "CLOSED") {
-            await i.reply({ embeds: [embeds.warn("Order unavailable", "This order is not open.")], ephemeral: true });
+            await i.reply({ embeds: [embeds.warn("Order unavailable", "This order is not open.")], flags: MessageFlags.Ephemeral });
             return;
         }
         await i.reply({
@@ -446,7 +446,7 @@ export class OrderService {
                     danger: true,
                 }),
             ],
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
     async closeOrder(guild, channelId, closer, claimedById) {
@@ -488,14 +488,14 @@ export class OrderService {
             if (!channel)
                 return;
             await channel.permissionOverwrites.edit(userId, { ViewChannel: true, SendMessages: true, ReadMessageHistory: true, AttachFiles: true }).catch(() => { });
-            await i.reply({ embeds: [embeds.success("User added", `<@${userId}> can now access this order.`)], ephemeral: true });
+            await i.reply({ embeds: [embeds.success("User added", `<@${userId}> can now access this order.`)], flags: MessageFlags.Ephemeral });
             return;
         }
         const menu = new UserSelectMenuBuilder().setCustomId(`wings:order:add:${channelId}:menu`).setPlaceholder("Select a user to add");
         await i.reply({
             embeds: [embeds.info("Add user", "Pick a member to grant access to this order.")],
             components: [new ActionRowBuilder().addComponents(menu)],
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
     async handleRemoveUser(i) {
@@ -511,18 +511,18 @@ export class OrderService {
                 return;
             const order = await this.fetchOrder(channelId);
             if (order && userId === order.openerId) {
-                await i.reply({ embeds: [embeds.error("Cannot remove opener", "The order opener cannot be removed.")], ephemeral: true });
+                await i.reply({ embeds: [embeds.error("Cannot remove opener", "The order opener cannot be removed.")], flags: MessageFlags.Ephemeral });
                 return;
             }
             await channel.permissionOverwrites.edit(userId, { ViewChannel: false, SendMessages: false }).catch(() => { });
-            await i.reply({ embeds: [embeds.success("User removed", `<@${userId}> no longer has access to this order.`)], ephemeral: true });
+            await i.reply({ embeds: [embeds.success("User removed", `<@${userId}> no longer has access to this order.`)], flags: MessageFlags.Ephemeral });
             return;
         }
         const menu = new UserSelectMenuBuilder().setCustomId(`wings:order:remove:${channelId}:menu`).setPlaceholder("Select a user to remove");
         await i.reply({
             embeds: [embeds.info("Remove user", "Pick a member to revoke access from this order.")],
             components: [new ActionRowBuilder().addComponents(menu)],
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
     async handleTranscript(i) {
@@ -531,7 +531,7 @@ export class OrderService {
         const channelId = this.parseChannelId(i.customId, "wings:order:transcript");
         if (!channelId)
             return;
-        await i.deferReply({ ephemeral: true });
+        await i.deferReply({ flags: MessageFlags.Ephemeral });
         const channel = await this.getOrderChannel(i.guild, channelId);
         if (!channel) {
             await i.editReply({ embeds: [embeds.error("Channel not found", "This order channel no longer exists.")] });
