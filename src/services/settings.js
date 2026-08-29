@@ -45,9 +45,12 @@ function serializeField(key, val) {
 
 export class SettingsService {
     prisma;
-    constructor(prisma) {
+    client;
+    constructor(prisma, client = null) {
         this.prisma = prisma;
+        this.client = client;
     }
+    setClient(client) { this.client = client; }
     parse(row) {
         if (!row)
             return row;
@@ -79,8 +82,12 @@ export class SettingsService {
             if (f in next)
                 next[f] = serializeField(f, next[f]);
         }
+        // Handle prefix cache invalidation
+        if ("prefix" in data && this.client?.services?.prefix) {
+            this.client.services.prefix.invalidate(guildId);
+        }
         // Upsert to handle new guilds (P2025 fix) — creates with defaults if missing
-        return this.prisma.guildConfig.upsert({
+        const result = await this.prisma.guildConfig.upsert({
             where: { guildId },
             update: { ...next, updatedAt: new Date() },
             create: {
@@ -100,6 +107,13 @@ export class SettingsService {
                 orders: next.orders ?? "{}",
             },
         });
+        // Also invalidate prefix cache if prefix was changed (for direct patch)
+        if ("prefix" in data && this.client?.services?.prefix) {
+            // Ensure cache is set to new value for immediate effect
+            const newPrefix = data.prefix ?? "!";
+            this.client.services.prefix.cache.set(guildId, { prefix: newPrefix, expires: Date.now() + 5 * 60 * 1000 });
+        }
+        return result;
     }
     async setModule(guildId, key, value) {
         const current = await this.get(guildId);
