@@ -82,7 +82,7 @@ export class TicketSystemService {
     }
 
     async buildOverwrites(guild, openerId, type) {
-        const cfg = await this.client.services.settings.get(guild.id).catch(() => null);
+        const cfg = await this.client?.services?.settings.get(guild.id).catch(() => null);
         const staffIds = (() => { try { return JSON.parse(type.staffRoleIds ?? "[]"); } catch { return []; } })();
         const modIds = (() => { try { return JSON.parse(type.moderatorRoleIds ?? "[]"); } catch { return []; } })();
         // Fallback to global staff/mod if type has none
@@ -130,7 +130,7 @@ export class TicketSystemService {
         const member = interaction.member;
 
         // Access control: blacklist / role restrictions
-        const cfg = await this.client.services.settings.get(guild.id).catch(()=>null);
+        const cfg = await this.client?.services?.settings.get(guild.id).catch(()=>null);
         if (cfg?.ignoredUserIds?.includes(member.id)) {
             return interaction.reply({ embeds: [embeds.error("Access denied", "You are not allowed to open tickets.")], flags: 64 }).catch(()=>{});
         }
@@ -138,7 +138,7 @@ export class TicketSystemService {
         let type = await this.prisma.ticketType.findUnique({ where: { guildId_key: { guildId: guild.id, key } } }).catch(()=>null);
         // Fallback: if DB has no types yet, auto-create from panel defaults (so dropdown always works)
         if (!type) {
-            const fallbacks = this.client.services.panels ? this.client.services.panels.getFallbackTicketTypes(panelType) : [];
+            const fallbacks = this.client?.services?.panels ? this.client?.services?.panels.getFallbackTicketTypes(panelType) : [];
             const fb = fallbacks.find((f)=>f.key===key);
             if (fb) {
                 try {
@@ -249,7 +249,7 @@ export class TicketSystemService {
 
         // Logging
         try {
-            const logCh = await this.client.services.logging.channel(guild, "mod");
+            const logCh = await this.client?.services?.logging.channel(guild, "mod");
             if (logCh) await logCh.send({ embeds: [embeds.moderation("Ticket created", `${type.displayName} by <@${member.id}>`, [{name:"Channel", value:`<#${channel.id}>`, inline:true}])] }).catch(()=>{});
         } catch {}
 
@@ -404,7 +404,7 @@ export class TicketSystemService {
                 for (const m of [...msgs.values()].reverse()) lines.push(`[${m.createdAt.toISOString()}] ${m.author.tag}: ${m.content}`);
                 const buf = Buffer.from(lines.join("\n"), "utf-8");
                 const file = new AttachmentBuilder(buf).setName(`transcript-${channelId}.txt`);
-                const cfg = await this.client.services.settings.get(i.guild.id).catch(()=>null);
+                const cfg = await this.client?.services?.settings.get(i.guild.id).catch(()=>null);
                 // Try ticket type transcript channel? For now modLog
                 if (cfg?.modLogChannelId) {
                     const logCh = i.guild.channels.cache.get(cfg.modLogChannelId);

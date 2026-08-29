@@ -260,3 +260,162 @@ model Afk {
   since     DateTime @default(now())
   @@id([guildId, userId])
 }
+
+model LevelConfig {
+  guildId            String  @id
+  xpMultiplier       Float   @default(1.0)
+  channelMultipliers String  @default("{}")
+  roleRewards        String  @default("[]")
+  streakEnabled      Boolean @default(true)
+  announceChannelId  String?
+  antiFarmEnabled    Boolean @default(true)
+  prestigeEnabled    Boolean @default(true)
+  updatedAt          DateTime @updatedAt
+}
+
+model EconomyConfig {
+  guildId        String  @id
+  dailyAmount    Int     @default(100)
+  weeklyAmount   Int     @default(500)
+  shopEnabled    Boolean @default(true)
+  tradingEnabled Boolean @default(true)
+  jobsEnabled    Boolean @default(true)
+  updatedAt      DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  guildId   String
+  actorId   String?
+  targetId  String?
+  action    String
+  category  String
+  details   String?
+  createdAt DateTime @default(now())
+  @@index([guildId, createdAt])
+  @@index([guildId, category])
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  guildId     String?
+  key         String
+  name        String
+  description String?
+  category    String   @default("general")
+  icon        String?
+  rewards     String   @default("{}")
+  conditions  String   @default("{}")
+  createdAt   DateTime @default(now())
+  @@unique([guildId, key])
+  @@index([guildId])
+}
+
+model UserAchievement {
+  guildId         String
+  userId          String
+  achievementId   String
+  progress        Int      @default(0)
+  unlocked        Boolean  @default(false)
+  unlockedAt      DateTime?
+  updatedAt       DateTime @updatedAt
+  @@id([guildId, userId, achievementId])
+  @@index([guildId, userId])
+}
+
+model AutomationRule {
+  id         String   @id @default(uuid())
+  guildId    String
+  name       String?
+  enabled    Boolean  @default(true)
+  trigger    String
+  conditions String   @default("{}")
+  actions    String   @default("[]")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([guildId, trigger])
+}
+
+model Backup {
+  id          String   @id @default(uuid())
+  guildId     String
+  data        String
+  version     Int      @default(1)
+  createdById String
+  createdByTag String?
+  createdAt   DateTime @default(now())
+  @@index([guildId, createdAt])
+}
+
+model EconomyTransaction {
+  id           String   @id @default(uuid())
+  guildId      String
+  userId       String
+  type         String
+  amount       Int
+  balanceAfter Int
+  meta         String?
+  createdAt    DateTime @default(now())
+  @@index([guildId, userId])
+  @@index([guildId, createdAt])
+}
+
+model CaseNote {
+  id         String   @id @default(uuid())
+  guildId    String
+  caseNumber Int?
+  targetId   String
+  authorId   String
+  authorTag  String?
+  content    String
+  createdAt  DateTime @default(now())
+  @@index([guildId, targetId])
+  @@index([guildId, caseNumber])
+}
+
+model Appeal {
+  id          String   @id @default(uuid())
+  guildId     String
+  caseNumber  Int
+  appellantId String
+  reason      String
+  status      String   @default("PENDING")
+  reviewerId  String?
+  reviewerTag String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([guildId, status])
+}
+
+model TicketRating {
+  id        String   @id @default(uuid())
+  guildId   String
+  channelId String
+  raterId   String
+  rating    Int
+  feedback  String?
+  createdAt DateTime @default(now())
+  @@unique([guildId, channelId, raterId])
+  @@index([guildId])
+}
+
+model RaidIncident {
+  id        String   @id @default(uuid())
+  guildId   String
+  type      String
+  risk      Int
+  details   String?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  @@index([guildId, createdAt])
+}
+
+model XpStreak {
+  guildId    String
+  userId     String
+  streak     Int      @default(0)
+  longest    Int      @default(0)
+  lastXpAt   DateTime?
+  updatedAt  DateTime @updatedAt
+  @@id([guildId, userId])
+}
