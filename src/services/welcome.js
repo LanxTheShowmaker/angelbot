@@ -22,7 +22,7 @@ export class WelcomeService {
         // Autorole from cfg.ignoredRoleIds abuse? Use modules.autoroleIds if stored
         const autoroles = (()=>{ try{ const m=cfg.modules?.autoroleIds; return Array.isArray(m)?m:[]; }catch{return[]}})();
         for (const rid of autoroles) await member.roles.add(rid).catch(()=>{});
-        const embed = new EmbedBuilder().setColor(Theme.accent).setTitle(`Welcome — ${guild.name}`).setDescription(`Hey <@${member.id}> — welcome to **${guild.name}**!\n*Read regulations, pick a panel, and enjoy.*`).setThumbnail(member.user.displayAvatarURL({ size:128 })).setFooter({ text:"A.N.G.E.L. • heavenly service"}).setTimestamp();
+        const embed = new EmbedBuilder().setColor(Theme.accent).setTitle(`Welcome — ${guild.name}`).setDescription(`Hey <@${member.id}> — welcome to **${guild.name}**!\n*Read regulations, pick a panel, and enjoy.*`).setThumbnail(member.user.displayAvatarURL({ size:128 })).setFooter({ text:"A.N.G.E.L."}).setTimestamp();
         const row = new ActionRowBuilder();
         // Verification button if verifyRole set in modules.verifyRoleId
         const verifyRole = cfg.modules?.verifyRoleId;

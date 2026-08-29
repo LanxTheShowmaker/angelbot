@@ -19,7 +19,7 @@ function build(kind, opts) {
         const title = opts.title.includes(Brand.mark) || opts.title.match(/^[📜🪽🛒🛟📊✦]/) ? opts.title : `${opts.title}`;
         embed.setTitle(title);
     }
-    // Author for panels/tickets — heavenly accent
+    // Author for panels/tickets
     if (opts.author) {
         embed.setAuthor({ name: opts.author.name ?? Brand.name, iconURL: opts.author.iconURL ?? undefined });
     }

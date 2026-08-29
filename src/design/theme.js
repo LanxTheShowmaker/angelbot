@@ -1,5 +1,5 @@
 export const Theme = {
-    accent: 0x9b8ecf, // angelic lavender — primary
+    accent: 0x9b8ecf, // lavender — primary
     success: 0x6ee7b7, // mint — calm success
     danger: 0xf87171, // soft coral — gentle danger
     warn: 0xfbbf24, // warm amber
@@ -13,7 +13,7 @@ export const Theme = {
 };
 export const Brand = {
     name: "A.N.G.E.L.",
-    footer: "A.N.G.E.L.  •  heavenly service",
+    footer: "A.N.G.E.L.",
     mark: "✦",
     icon: null, // set to guild icon dynamically where possible
 };

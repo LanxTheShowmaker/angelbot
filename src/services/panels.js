@@ -20,7 +20,7 @@ const PANEL_META = {
 const DEFAULT_PANELS = {
     [PANEL_TYPES.ORDER]: {
         title: "✦  Place Your Order",
-        description: "Welcome to **A.N.G.E.L.** — your atelier for bespoke design.\nEvery creation is crafted with care, clarity, and grace.\n\nChoose a service below to open a private ticket. Our designers will guide you from brief to delivery.",
+        description: "Open a ticket for design services. Select a category below to get started.",
         bannerUrl: null,
         thumbnailUrl: null,
         embedColor: null,
@@ -38,29 +38,29 @@ const DEFAULT_PANELS = {
         bannerUrl: null,
         sections: [
             { title: "Submitting a Request", content: "> Clearly explain your situation\n> Provide proof, screenshots, or IDs where relevant\n> One request per ticket — be concise and kind" },
-            { title: "Review Process", content: "> Staff review within 24 hours\n> You'll be updated directly in the ticket\n> Urgent matters are prioritized with grace" },
+            { title: "Review Process", content: "> Staff review within 24 hours\n> You'll be updated directly in the ticket\n> Urgent matters are prioritized" },
         ],
         dropdownPlaceholder: "🛟  Choose a request",
         footerText: "A.N.G.E.L.  •  private and confidential",
     },
     [PANEL_TYPES.REGULATIONS]: {
         title: "📜  Regulations  •  Our Covenant",
-        description: "*To keep our community safe, inspiring, and fair — please honour these principles.*",
+        description: "*To keep our community safe and fair — please follow these rules.*",
         bannerUrl: null,
-        subtitle: "Grace • Respect • Integrity",
+        subtitle: "Respect • Integrity",
         sections: [
-            { title: "Essentials  —  The Foundation", content: "```\n•  Remain respectful and professional at all times\n•  Follow staff guidance with grace\n•  Never impersonate others or misrepresent work\n•  Scamming, fraud, or deceptive practices are forbidden\n•  Do not interfere with another's transaction or order\n•  Honour Discord Terms of Service and community spirit\n```" },
-            { title: "Craft & Conduct", content: "> Customer — Be clear, patient, and appreciative of the creative process\n> Designer — Deliver with integrity, communicate, respect deadlines\n> Staff — Serve with fairness, transparency, and kindness\n>AI — Disclose AI assistance where relevant, originality is cherished" },
+            { title: "Essentials  —  The Foundation", content: "```\n•  Remain respectful and professional at all times\n•  Follow staff guidance\n•  Never impersonate others or misrepresent work\n•  Scamming, fraud, or deceptive practices are forbidden\n•  Do not interfere with another's transaction or order\n•  Honour Discord Terms of Service and community spirit\n```" },
+            { title: "Conduct", content: "> Customer — Be clear and patient\n> Designer — Deliver with integrity, communicate, respect deadlines\n> Staff — Serve with fairness and transparency\n> AI — Disclose AI assistance where relevant" },
         ],
         footerText: "A.N.G.E.L.  •  regulations live in respect",
     },
     [PANEL_TYPES.DASHBOARD]: {
         title: "✦  A.N.G.E.L. Dashboard",
-        description: "**Your gateway to our world.**\nA curated space for discovery — our story, our craft, and our community.\n\n*Open an Order or Assistance ticket to begin your journey.*",
+        description: "Server overview and quick access.\n\n*Open an Order or Assistance ticket to get started.*",
         bannerUrl: null,
         sections: [
-            { title: "Our Community", content: "> A sanctuary for creators, dreamers, and patrons.\n> Design, development, and heartfelt support — woven together with care." },
-            { title: "Our Purpose", content: "> To craft beauty that endures, to serve with grace, and to grow together.\n> Every ticket is a promise — we honour it." },
+            { title: "Our Community", content: "> Support, design, and development — in one place." },
+            { title: "Our Purpose", content: "> Provide reliable service and support.\n> Every ticket is handled professionally." },
         ],
         dropdownPlaceholder: "✦  Explore more",
         dropdownOptions: [
