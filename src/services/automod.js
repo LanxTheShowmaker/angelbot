@@ -149,7 +149,7 @@ export class AutomodService {
             }
         }
         if (am.autoLockdown) {
-            await this.client.services.fortress?.autoEnable(guild, config).catch((e) => logger.error("automod", "auto fortress failed", e));
+            await this.client?.services?.fortress?.autoEnable(guild, config).catch((e) => logger.error("automod", "auto fortress failed", e));
         }
     }
     // Test/preview helpers

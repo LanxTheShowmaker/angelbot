@@ -38,7 +38,7 @@ export class AssetService {
         ];
         // Add staff/mod if config exists
         try {
-            const cfg = await this.client.services.settings.get(guild.id).catch(() => null);
+            const cfg = await this.client?.services?.settings.get(guild.id).catch(() => null);
             const ids = [...(cfg?.staffRoleIds ?? []), ...(cfg?.moderatorRoleIds ?? [])];
             for (const id of ids) overwrites.push({ id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory] });
         } catch {}
