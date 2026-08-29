@@ -1,8 +1,9 @@
-import { SlashCommandBuilder, MessageFlags, EmbedBuilder, PermissionFlagsBits } from "discord.js";
+import { SlashCommandBuilder, MessageFlags, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { embeds } from "../../design/embeds.js";
 import { isStaff } from "../../core/services.js";
 export default {
     data: new SlashCommandBuilder().setName("ticket").setDescription("Ticket V5 — manage tickets")
+        .addSubcommand(s=> s.setName("list").setDescription("Intelligent ticket list [category][user][id]").addStringOption(o=>o.setName("category").setDescription("Category").addChoices({name:"All",value:"all"},{name:"Order",value:"ORDER"},{name:"Assistance",value:"ASSISTANCE"},{name:"Dashboard",value:"DASHBOARD"})).addUserOption(o=>o.setName("user").setDescription("Filter by user")).addStringOption(o=>o.setName("status").setDescription("Status").addChoices({name:"All",value:"all"},{name:"Open",value:"OPEN"},{name:"Claimed",value:"CLAIMED"},{name:"Closed",value:"CLOSED"})).addIntegerOption(o=>o.setName("page").setDescription("Page").setMinValue(1)))
         .addSubcommand(s=> s.setName("transfer").setDescription("Transfer claim").addUserOption(o=>o.setName("user").setDescription("New assignee").setRequired(true)))
         .addSubcommand(s=> s.setName("rename").setDescription("Rename ticket").addStringOption(o=>o.setName("name").setDescription("New name").setRequired(true)))
         .addSubcommand(s=> s.setName("add").setDescription("Add user").addUserOption(o=>o.setName("user").setDescription("User").setRequired(true)))
@@ -18,7 +19,67 @@ export default {
         const prisma=interaction.client.prisma;
         const channel=interaction.channel;
         const guild=interaction.guild;
-        // stats sub does not require ticket channel check
+        // list & stats do not require ticket channel
+        if(sub==="list"){
+            const category=interaction.options.getString("category");
+            const user=interaction.options.getUser("user");
+            const status=interaction.options.getString("status");
+            const page=Math.max(1, interaction.options.getInteger("page")||1);
+            const limit=8;
+            const offset=(page-1)*limit;
+            const catFilter=category && category!=="all" ? category : null;
+            const statusFilter=status && status!=="all" ? status : null;
+            const cfg=await interaction.client.services.settings.get(guild.id).catch(()=>null);
+            const isStaffUser=isStaff(interaction.member,cfg);
+            let userFilter=user ? user.id : null;
+            if(!isStaffUser && !userFilter) userFilter=interaction.user.id;
+            const result=await interaction.client.services.tickets.listTickets(guild.id, { status: statusFilter, category: catFilter, userId: userFilter, limit, offset }).catch(()=>({ rows:[], total:0 }));
+            const totalPages=Math.max(1, Math.ceil(result.total/limit));
+            const maxOpen=(await prisma.ticketType.findFirst({ where:{ guildId: guild.id }}).catch(()=>null))?.maxOpen || 3;
+            const embed=new EmbedBuilder().setColor(0x60a5fa).setTitle(`Ticket List — [category][user][id]`).setFooter({ text:`Page ${page}/${totalPages} • ${result.total} tickets • ${isStaffUser?"staff view":"your tickets"}` }).setTimestamp();
+            if(!result.rows.length) embed.setDescription(`*No tickets* ${catFilter?`in **${catFilter}**`:""} ${userFilter?`for <@${userFilter}>`:""} ${statusFilter?`• ${statusFilter}`:""}`);
+            else {
+                const lines=result.rows.map(t=>{
+                    const chan=guild.channels.cache.get(t.channelId);
+                    const chName=chan? `<#${t.channelId}>` : `\`#${t.id.slice(0,4)}\``;
+                    const catLabel=t.category||t.panelType||"Ticket";
+                    const short=t.shortId||t.id.slice(0,4);
+                    const claim=t.claimedById? `→ <@${t.claimedById}>` : "unclaimed";
+                    return `\`[${catLabel}][<@${t.openerId}>][${short}]\` ${chName} **${t.status}** ${claim} <t:${Math.floor(new Date(t.createdAt).getTime()/1000)}:R>`;
+                }).join("\n");
+                embed.setDescription(lines.slice(0,4000));
+                embed.addFields({ name:"Intelligent", value:`*Channel names use \`${result.rows[0]?.channelId ? guild.channels.cache.get(result.rows[0].channelId)?.name || "category-user-id" : "category-user-id"}\` — e.g., \`gfx-ultim-a1b2\` — allows **${maxOpen}** concurrent tickets per user*`});
+            }
+            const row=new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`ticket:list:prev:${page}`).setLabel("◀ Prev").setStyle(ButtonStyle.Secondary).setDisabled(page<=1),
+                new ButtonBuilder().setCustomId(`ticket:list:next:${page}`).setLabel("Next ▶").setStyle(ButtonStyle.Secondary).setDisabled(page>=totalPages)
+            );
+            if(totalPages>1){
+                interaction.client.components.set("ticket:list", async(i)=>{
+                    if(!i.customId.startsWith("ticket:list:")) return;
+                    if(i.user.id!==interaction.user.id) return i.reply({ embeds:[embeds.error("Not yours","")], flags: MessageFlags.Ephemeral});
+                    const parts=i.customId.split(":"); // ticket:list:prev:3
+                    const dir=parts[2]; const cur=parseInt(parts[3]);
+                    const next=dir==="next"? cur+1 : cur-1;
+                    if(next<1 || next>totalPages) return i.deferUpdate().catch(()=>{});
+                    const nxtRes=await i.client.services.tickets.listTickets(guild.id, { status: statusFilter, category: catFilter, userId: userFilter, limit, offset:(next-1)*limit }).catch(()=>({ rows:[], total:0 }));
+                    const nxtEmbed=new EmbedBuilder().setColor(0x60a5fa).setTitle(`Ticket List — [category][user][id]`).setFooter({ text:`Page ${next}/${totalPages} • ${nxtRes.total} tickets` }).setTimestamp();
+                    if(!nxtRes.rows.length) nxtEmbed.setDescription("*No tickets*");
+                    else nxtEmbed.setDescription(nxtRes.rows.map(t=>{
+                        const chan=guild.channels.cache.get(t.channelId);
+                        const chName=chan? `<#${t.channelId}>` : `\`#${t.id.slice(0,4)}\``;
+                        const catLabel=t.category||t.panelType||"Ticket";
+                        const short=t.shortId||t.id.slice(0,4);
+                        return `\`[${catLabel}][<@${t.openerId}>][${short}]\` ${chName} **${t.status}**`;
+                    }).join("\n").slice(0,4000));
+                    await i.update({ embeds:[nxtEmbed], components:[ new ActionRowBuilder().addComponents(
+                        new ButtonBuilder().setCustomId(`ticket:list:prev:${next}`).setLabel("◀ Prev").setStyle(ButtonStyle.Secondary).setDisabled(next<=1),
+                        new ButtonBuilder().setCustomId(`ticket:list:next:${next}`).setLabel("Next ▶").setStyle(ButtonStyle.Secondary).setDisabled(next>=totalPages)
+                    )] }).catch(()=>{});
+                });
+            }
+            return interaction.reply({ embeds:[embed], components: totalPages>1 ? [row] : [], flags: MessageFlags.Ephemeral });
+        }
         if(sub==="stats"){
             const total=await prisma.ticket.count({ where:{ guildId: guild.id }}).catch(()=>0);
             const open=await prisma.ticket.count({ where:{ guildId: guild.id, status:{ not:"CLOSED" }}}).catch(()=>0);

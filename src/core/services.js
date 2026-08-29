@@ -26,6 +26,7 @@ import { AchievementService } from "../services/achievements.js";
 import { AutomationService } from "../services/automation.js";
 import { BackupService } from "../services/backup.js";
 import { DiagnosticsService } from "../services/diagnostics.js";
+import { BrandingService } from "../services/branding.js";
 export function createServices(client) {
     const prisma = new PrismaClient();
     // SQLite hardening for multi-guild (global bot) — WAL + busy timeout
@@ -59,10 +60,11 @@ export function createServices(client) {
     const automation = new AutomationService(prisma, client);
     const backup = new BackupService(prisma, client);
     const diagnostics = new DiagnosticsService(prisma, client);
+    const branding = new BrandingService(prisma, client);
     // Inject prisma into assets/panels that need it (assets needs settings, already has client)
     // Cross-wire assets with prisma for convenience
     client.prisma = prisma;
-    return { settings, cases, moderation, logging, automod, orders, fortress, utility, assets, panels, tickets, welcome, leveling, reactionRoles, economy, giveaways, suggestions, starboard, afk, audit, analytics, intelligence, raid, achievements, automation, backup, diagnostics, prisma };
+    return { settings, cases, moderation, logging, automod, orders, fortress, utility, assets, panels, tickets, welcome, leveling, reactionRoles, economy, giveaways, suggestions, starboard, afk, audit, analytics, intelligence, raid, achievements, automation, backup, diagnostics, branding, prisma };
 }
 export function isStaff(member, config) {
     if (member.permissions.has("Administrator") || member.permissions.has("ManageGuild"))
