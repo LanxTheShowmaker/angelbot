@@ -66,13 +66,13 @@ async function buildStatusEmbed(guild, client) {
     const ticketEnabled = panels.some((p) => p.enabled);
     lines.push(`\n🎫  **Tickets**  ${ticketEnabled ? "⬤  Enabled" : "◯  Disabled"}     📄  **Transcripts**  ${(await client.services.settings.get(guild.id).catch(()=>null))?.logChannelId ? "⬤  Enabled" : "◯  Disabled"}`);
 
-    const embed = embeds.panel("✦  A.N.G.E.L.  •  Ticket & Panel Manager", `*Craft your server's public face — panels, tickets, and support, woven with grace.*\n\n${lines.join("\n")}`, [
+    const embed = embeds.panel("A.N.G.E.L. — Ticket & Panel Manager", `Server configuration for panels, tickets, and support.\n\n${lines.join("\n")}`, [
         { name: "  Guild", value: `> **${guild.name}**`, inline: true },
         { name: "  Panels", value: `> **${panels.filter((p) => p.enabled).length}/4** live`, inline: true },
         { name: "  Tip", value: `> *Select a panel below to configure*`, inline: true },
     ], {
-        author: { name: `A.N.G.E.L.  •  ${guild.name}`, iconURL: guild.iconURL({ size: 64 }) ?? undefined },
-        footer: `A.N.G.E.L.  •  heavenly service  •  ${new Date().toLocaleDateString()}`,
+        author: { name: `A.N.G.E.L. • ${guild.name}`, iconURL: guild.iconURL({ size: 64 }) ?? undefined },
+        footer: `A.N.G.E.L. • Discord Management Platform`,
     });
     embed.setThumbnail(guild.iconURL({ size: 128 }) ?? null);
     return embed;
@@ -111,7 +111,7 @@ async function panelEditorEmbed(guild, panelType, client) {
         [PANEL_TYPES.REGULATIONS]: { title: "Regulations", emoji: "📜", desc: "Your covenant of safety" },
         [PANEL_TYPES.DASHBOARD]: { title: "Dashboard", emoji: "📊", desc: "Your community's front door" },
     }[panelType];
-    const embed = embeds.panel(`✦  ${meta.emoji}  ${meta.title}`, `*${meta.desc}*\nConfigure this panel for **${guild.name}**.`, [
+    const embed = embeds.panel(`${meta.emoji}  ${meta.title}`, `${meta.desc}\nConfigure this panel for ${guild.name}.`, [
         { name: "  State", value: panel.enabled ? "```diff\n+ Live\n```" : "```diff\n- Disabled\n```", inline: true },
         { name: "  Channel", value: channel ? `<#${channel.id}>` : "`—  Not set`", inline: true },
         { name: "  Message", value: panel.messageId ? "`⬤  Deployed`" : "`◯  Awaiting deploy`", inline: true },
@@ -121,8 +121,8 @@ async function panelEditorEmbed(guild, panelType, client) {
         ...(panelType === PANEL_TYPES.REGULATIONS ? [{ name: "  Sections", value: `> **${(cfg.sections ?? []).length}** sections`, inline: true }] : []),
         ...(types.length ? [{ name: "  Ticket Types", value: `> **${types.length}** configured`, inline: true }] : []),
     ], {
-        author: { name: `A.N.G.E.L.  •  ${meta.title}`, iconURL: guild.iconURL({ size:64 }) ?? undefined },
-        footer: `A.N.G.E.L.  •  ${panelType}  •  heavenly service`,
+        author: { name: `${meta.title}`, iconURL: guild.iconURL({ size:64 }) ?? undefined },
+        footer: `A.N.G.E.L. • ${guild.name}`,
     });
     if (panel.bannerUrl) embed.setImage(panel.bannerUrl);
     embed.setThumbnail(guild.iconURL({ size:128 }) ?? null);

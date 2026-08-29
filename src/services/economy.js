@@ -1,6 +1,6 @@
 import { logger } from "../core/logger.js";
 const JOBS = [
-    { id:"miner", name:"Miner", payout:[30,60], cooldown: 3600*1000, description:"Mine heavenly minerals" },
+    { id:"miner", name:"Miner", payout:[30,60], cooldown: 3600*1000, description:"Mine minerals" },
     { id:"guard", name:"Guardian", payout:[40,80], cooldown: 3600*1000, description:"Guard the gates" },
     { id:"scribe", name:"Scribe", payout:[25,50], cooldown: 3600*1000, description:"Copy sacred texts" },
     { id:"healer", name:"Healer", payout:[35,70], cooldown: 3600*1000, description:"Heal the wounded" },

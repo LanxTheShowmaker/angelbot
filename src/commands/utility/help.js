@@ -61,7 +61,7 @@ const HELP_TOPICS = {
         label: "Economy V5",
         emoji: "💰",
         description: "Economy V5",
-        title: "💰 Economy — Heavenly Coins",
+        title: "💰 Economy — Coins",
         content: [
             { name:"  Earn", value:"```\n• Message 10% chance 5-15 coins\n• Slash: /daily /weekly  •  Prefix: !daily !weekly\n• Slash: /economy work  •  Prefix: !work\n```" },
             { name:"  Spend & Trade (Both)", value:"```\nSlash: /shop  •  Prefix: !shop\nSlash: /balance  •  Prefix: !balance or !bal\nSlash: /economy gift @user  •  Prefix: !gift @user\n```" },
@@ -107,8 +107,8 @@ async function buildMainEmbed(guild, displayName){
     const prefix = prefixService ? await prefixService.getPrefix(guild.id).catch(()=> "!") : "!";
     return new EmbedBuilder().setColor(Theme.panel)
         .setAuthor({ name: `${displayName} • Help`, iconURL: guild?.iconURL({ size:64 }) ?? undefined })
-        .setTitle("✦  How to Use A.N.G.E.L.")
-        .setDescription(`*Heavenly service — use **slash** \`/\` or **prefix** \`${prefix}\` — both call the same logic.*`)
+        .setTitle("A.N.G.E.L. — Command Reference")
+        .setDescription(`Use slash \`/\` or prefix \`${prefix}\` — both use the same commands.`)
         .addFields(
             { name:"  🚀 Quick Start", value: "```\n/autosetup → foundation  •  /setuptickets → panels  •  /ticket list → your tickets\n```", inline:false },
             { name:"  💬 Two Ways", value: `**Slash:** \`/ban @user\` \`/ticket close\` \`/ping\` \`/whois @user\`\n**Prefix:** \`${prefix}ban @user\` \`${prefix}ticket close\` \`${prefix}ping\` \`${prefix}whois @user\`\n*Same permissions, same services, same results.*`, inline:false },
@@ -149,7 +149,7 @@ export default {
             await i.reply({ embeds:[about], flags: MessageFlags.Ephemeral}).catch(()=>{});
         });
         interaction.client.components.set("help:support", async(i)=>{
-            await i.reply({ embeds:[embeds.info("Support", `Need help? Open a ticket via panel dropdown, or run \`/support\`.\nStaff will claim with grace.` )], flags: MessageFlags.Ephemeral}).catch(()=>{});
+            await i.reply({ embeds:[embeds.info("Support", `Need help? Open a ticket via a panel or run \`/support\`.`)], flags: MessageFlags.Ephemeral}).catch(()=>{});
         });
         await interaction.reply({ embeds:[main], components:[row, buttons], flags: MessageFlags.Ephemeral }).catch(()=>{});
     }
@@ -158,13 +158,12 @@ async function buildAboutEmbed(guild, client){
     const branding=await client.services.branding?.get(guild.id).catch(()=>null);
     const disp=branding?.displayName || client.user.username;
     const icon=branding?.avatarUrl || client.user.displayAvatarURL();
-    const e=new EmbedBuilder().setColor(Theme.panel).setAuthor({ name:`${disp} • About`, iconURL: icon }).setTitle("A.N.G.E.L. — Global, Per-Server Configurable")
-        .setDescription("*Your atelier for bespoke design, moderation, tickets, leveling, economy — crafted with grace.*")
+    const e=new EmbedBuilder().setColor(Theme.panel).setAuthor({ name:`${disp} • About`, iconURL: icon }).setTitle("A.N.G.E.L.")
+        .setDescription(`Discord bot for server management.`)
         .addFields(
-            { name:"  🌟 V5", value:"> Intelligent tickets, HTML archives, per-server branding, achievements, automation, analytics", inline:false },
-            { name:"  📊 Stats", value:`> \`${client.guilds.cache.size} guilds\` • \`Node ${process.version}\` • <t:${Math.floor((Date.now()-client.uptime)/1000)}:R>`, inline:true },
-            { name:"  Branches", value:"> `master` FULL • `cherub` 320MB • `seraph` DIY", inline:true },
-            { name:"  Quick Use", value:"```\n/help → guide  •  /config → setup  •  /ticket list → tickets\n```", inline:false }
+            { name:"Features", value: `• Tickets\n• Moderation\n• AutoMod\n• Leveling\n• Economy\n• Automation`, inline:false },
+            { name:"Getting Started", value: `**1.** Invite the bot to your server.\n**2.** Run \`/autosetup\` to set up roles and channels.\n**3.** Use \`/setuptickets\` to create ticket panels.`, inline:false },
+            { name:"Help", value: `\`/help\` — Command list and usage\n\`/config\` — Server settings\n\`/support\` — Get help`, inline:false }
         ).setThumbnail(icon).setFooter({ text:`A.N.G.E.L. • ${guild.name}`}).setTimestamp();
     return e;
 }
