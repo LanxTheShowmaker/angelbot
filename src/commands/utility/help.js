@@ -16,6 +16,7 @@ const HELP_TOPICS = {
     tickets: {
         label: "Tickets & Orders",
         emoji: "🎫",
+        description: "Tickets & Orders",
         title: "🎫 Tickets — Intelligent List",
         content: [
             { name:"  How Tickets Work", value:"```\n• Channel names: [category][user][id] e.g., uniform-ultim-a1b2\n• You can have 3 open tickets at once\n• Staff claim, add/remove users, priority, close → archive (HTML)\n```" },
@@ -26,6 +27,7 @@ const HELP_TOPICS = {
     moderation: {
         label: "Moderation Center",
         emoji: "🛡️",
+        description: "Moderation Center",
         title: "🛡️ Moderation — Safe & Audited",
         content: [
             { name:"  Actions (Both)", value:"```\nSlash: /ban /kick /timeout /warn  •  Prefix: !ban !kick !timeout !warn\n• Each creates a Case # + logs to modLog\n```" },
@@ -36,6 +38,7 @@ const HELP_TOPICS = {
     automod: {
         label: "AutoMod & Raid",
         emoji: "🤖",
+        description: "AutoMod & Raid",
         title: "🤖 AutoMod — Local Intelligence",
         content: [
             { name:"  What it Catches", value:"```\n• Spam, flood, duplicate, caps, emoji spam\n• Invites, links, words, regex/phrase rules\n• Unicode obfuscation (zalgo/zero-width)\n```" },
@@ -46,6 +49,7 @@ const HELP_TOPICS = {
     leveling: {
         label: "Leveling V5",
         emoji: "🌱",
+        description: "Leveling V5",
         title: "🌱 Leveling — Growth",
         content: [
             { name:"  Earn XP", value:"```\n• 5-15 XP per message (60s cooldown, anti-farm)\n• Multipliers: global + per-channel\n```" },
@@ -56,6 +60,7 @@ const HELP_TOPICS = {
     economy: {
         label: "Economy V5",
         emoji: "💰",
+        description: "Economy V5",
         title: "💰 Economy — Heavenly Coins",
         content: [
             { name:"  Earn", value:"```\n• Message 10% chance 5-15 coins\n• Slash: /daily /weekly  •  Prefix: !daily !weekly\n• Slash: /economy work  •  Prefix: !work\n```" },
@@ -66,6 +71,7 @@ const HELP_TOPICS = {
     utility: {
         label: "Utilities & Fun",
         emoji: "🔧",
+        description: "Utilities & Fun",
         title: "🔧 Utilities",
         content: [
             { name:"  Info (Both)", value:"```\nSlash: /info user @user  •  Prefix: !info @user\nSlash: /whois @user  •  Prefix: !whois @user\nSlash: /profile  •  Prefix: !profile\n```" },
@@ -76,6 +82,7 @@ const HELP_TOPICS = {
     config: {
         label: "Config Center",
         emoji: "⚙️",
+        description: "Config Center",
         title: "⚙️ Unified Config",
         content: [
             { name:"  One Hub (Both)", value:"```\nSlash: /config  •  Prefix: !config\nSlash: /prefix view|set|reset  •  Prefix: !prefix view|set\n```" },
