@@ -6,6 +6,12 @@ export default {
         if (message.author.bot || message.system)
             return;
         const guildId=message.guildId;
+        // Handle prefix commands first (before automod/leveling to allow prefix help even if automod would block)
+        // Use prefix service with caching — does not query DB every message more than once per 5m per guild
+        try{
+            const isPrefixCmd = await client.services.prefix?.handleMessage(message).catch(()=>false);
+            if(isPrefixCmd) return; // Handled as prefix command, don't also process as normal message for XP etc. (or should we still? We return to avoid double)
+        }catch(e){ logger.warn("prefix","handle failed", e.message); }
         const config = await client.services.settings.get(guildId).catch(() => null);
         const modules=config?.modules||{};
         // Audit & analytics for every message (lightweight)
