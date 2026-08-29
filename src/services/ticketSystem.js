@@ -57,10 +57,14 @@ export class TicketSystemService {
     sanitizeName(name) {
         let s = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
         if (!s) s = "user";
-        return s.slice(0, 20);
+        return s.slice(0, 12);
     }
-    async uniqueChannelName(guild, base, prefix) {
-        const fullBase = `${prefix}-${base}`.toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 90);
+    async uniqueChannelName(guild, categoryKey, userName, shortId, prefix) {
+        // V5 intelligent: [category][user][id] => category-user-id (Discord safe)
+        const cat = String(categoryKey||prefix||"ticket").toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,15);
+        const user = this.sanitizeName(userName);
+        const id = String(shortId).toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,6) || Math.random().toString(36).slice(2,6);
+        const fullBase = `${cat}-${user}-${id}`.replace(/[^a-z0-9-]/g, "-").replace(/-+/g,"-").slice(0,90);
         let name = fullBase;
         let n = 1;
         while (guild.channels.cache.some((c) => c.name === name)) {
@@ -68,6 +72,10 @@ export class TicketSystemService {
             n++;
         }
         return name;
+    }
+    // Legacy wrapper for older callers
+    async legacyChannelName(guild, base, prefix){
+        return this.uniqueChannelName(guild, prefix, base, Math.random().toString(36).slice(2,4), prefix);
     }
 
     async findCategory(guild, type) {
@@ -97,12 +105,13 @@ export class TicketSystemService {
         return overwrites;
     }
 
-    // Anti-duplicate + cooldowns
+    // Anti-duplicate + cooldowns — V5: allow multiple tickets per user (intelligent list)
     async canOpen(guild, userId, type) {
         const cfg = await this.prisma.ticketType.findUnique({ where: { guildId_key: { guildId: guild.id, key: type.key } } }).catch(()=>null) ?? type;
+        // Use higher default for V5 (3) if not set, and respect per-type maxOpen
+        const maxOpen = cfg.maxOpen ?? 3;
         const open = await this.prisma.ticket.count({ where: { guildId: guild.id, openerId: userId, status: { not: STATUS.CLOSED } } }).catch(()=>0);
-        const maxOpen = cfg.maxOpen ?? 1;
-        if (open >= maxOpen) return { ok: false, reason: `You already have ${open} open ticket(s) (max ${maxOpen}).` };
+        if (open >= maxOpen) return { ok: false, reason: `You have ${open} open ticket(s) (max ${maxOpen}). Close one before opening another.` };
         // Per-type cooldown
         if (cfg.cooldown > 0) {
             const key = `${guild.id}:${userId}:${cfg.key}`;
@@ -113,11 +122,13 @@ export class TicketSystemService {
                 return { ok: false, reason: `Cooldown: wait ${remain}s before opening another ${cfg.displayName} ticket.` };
             }
         }
-        // Check existing open ticket for same type (anti-duplicate per type)
-        const sameTypeOpen = await this.prisma.ticket.findFirst({ where: { guildId: guild.id, openerId: userId, typeId: cfg.id, status: { not: STATUS.CLOSED } } }).catch(()=>null);
-        if (sameTypeOpen) {
-            const ch = guild.channels.cache.get(sameTypeOpen.channelId);
-            return { ok: false, reason: `You already have an open ${cfg.displayName} ticket: ${ch ? `<#${ch.id}>` : sameTypeOpen.channelId}` };
+        // V5: allow multiple same-type tickets up to per-type limit (if configured). Previously blocked any duplicate.
+        // Only block if per-type count >= 2 and maxOpen is still 1 (legacy) — now allow.
+        const sameTypeCount = await this.prisma.ticket.count({ where: { guildId: guild.id, openerId: userId, typeId: cfg.id, status: { not: STATUS.CLOSED } } }).catch(()=>0);
+        const perTypeLimit = cfg.maxOpen ?? 3;
+        // If user already has 2 of same type and perTypeLimit is 1, would have been blocked earlier by total open check; for V5 we allow up to perTypeLimit
+        if (sameTypeCount >= perTypeLimit) {
+            return { ok: false, reason: `You have ${sameTypeCount} open ${cfg.displayName} tickets (max ${perTypeLimit} per type).` };
         }
         return { ok: true };
     }
@@ -208,8 +219,10 @@ export class TicketSystemService {
 
     async createTicket(guild, member, type, answers) {
         const prefix = type.channelPrefix ?? "ticket";
-        const base = this.sanitizeName(member.user.username);
-        const name = await this.uniqueChannelName(guild, base, prefix);
+        // V5 intelligent: [category][user][id] => e.g., uniform-ultim-a1b2 , order-ultim-8f3c
+        const shortId = Math.random().toString(36).slice(2,6).toLowerCase();
+        const categoryKey = type.key || type.panelType || prefix;
+        const name = await this.uniqueChannelName(guild, categoryKey, member.user.username, shortId, prefix);
         const category = await this.findCategory(guild, type);
         const overwrites = await this.buildOverwrites(guild, member.id, type);
         const channel = await guild.channels.create({ name, type: ChannelType.GuildText, parent: category?.id ?? null, permissionOverwrites: overwrites, topic: `Ticket ${type.displayName} • ${member.user.tag}` });
@@ -220,28 +233,43 @@ export class TicketSystemService {
         // Cooldown set
         if (type.cooldown) this.cooldowns.set(`${guild.id}:${member.id}:${type.key}`, Date.now());
 
-        // Welcome embed — heavenly, calm, premium
-        const fields = [
-            { name: "  Creator", value: `<@${member.id}>`, inline: true },
-            { name: "  Service", value: `${type.emoji ?? "✦"}  ${type.displayName}`, inline: true },
-            { name: "  Status", value: `🟡  ${status}`, inline: true },
-            { name: "  Priority", value: `◆  ${type.priority ?? "NORMAL"}`, inline: true },
-            { name: "  Opened", value: `<t:${Math.floor(Date.now()/1000)}:R>`, inline: true },
-        ];
-        if (answers.length) {
-            fields.push({ name: " ─  Required Information", value: " ", inline: false });
-            for (const a of answers) fields.push({ name: `  ${a.question.slice(0, 80)}`, value: `> ${a.answer.slice(0, 1024) || "—"}`, inline: false });
+        // V5 Welcome — matches ORDER-HERE image: banner, Clothing Ticket, Terms, Information
+        const branding=await this.client?.services?.branding?.get(guild.id).catch(()=>null);
+        const display=await this.client?.services?.branding?.getDisplay(guild).catch(()=>({ name:"A.N.G.E.L.", icon:null }));
+        // Resolve banner: branding banner > type banner > panel banner > fallback ORDER-HERE dark
+        let bannerUrl = branding?.bannerUrl || type.bannerUrl || null;
+        if(!bannerUrl){
+            try{
+                const panel=await this.prisma.panel.findUnique({ where:{ guildId_panelType:{ guildId: guild.id, panelType: type.panelType }}}).catch(()=>null);
+                bannerUrl=panel?.bannerUrl || null;
+            }catch{}
         }
-        if (type.instructions) fields.push({ name: "  Instructions", value: type.instructions.slice(0, 1024), inline: false });
-        else fields.push({ name: "  Next Steps", value: `> A staff member will claim this ticket shortly.\n> Please remain patient and provide any additional details.`, inline: false });
-
-        const welcome = embeds.ticket(`${type.emoji ?? "✦"}  New Ticket  •  ${type.displayName}`, type.welcomeMessage ?? `Hello <@${member.id}> — welcome to your private ticket.\nOur team will assist you with grace.`, fields, {
-            author: { name: `A.N.G.E.L. • ${type.displayName}`, iconURL: guild.iconURL({ size: 128 }) ?? undefined },
-            footer: `A.N.G.E.L.  •  ticket opened  •  ${member.user.tag}`,
-        });
-        if (type.bannerUrl) welcome.setImage(type.bannerUrl);
-        else welcome.setThumbnail(member.user.displayAvatarURL({ size: 128 }));
-        welcome.setColor(Theme.ticket);
+        // Build new embed to match image: dark, clean, Terms + Information
+        const welcome = new EmbedBuilder().setColor(0x2B2D31) // Discord dark to match image
+            .setTitle(`${type.displayName} Ticket`)
+            .setDescription(`Hey there <@${member.id}>. Welcome to your personal order ticket. Please take a moment to answer all the questions in your ticket.`);
+        if(bannerUrl) welcome.setImage(bannerUrl);
+        // Terms of Service field (from image)
+        const termsText = type.instructions ? type.instructions.slice(0,1024) : `By placing an order you agree to the full Terms & Conditions.\nAll orders are strictly **non-refundable** unless a member of the Executive Board decides otherwise.`;
+        welcome.addFields({ name:"Terms of Service", value: termsText, inline:false });
+        // Information field — per category
+        let infoValue;
+        if(answers.length){
+            infoValue = answers.map(a=> `• **${a.question}**: ${a.answer.slice(0,200)}`).join("\n");
+            if(infoValue.length>1024) infoValue=infoValue.slice(0,1021)+"…";
+        } else if(type.panelType==="ORDER"){
+            infoValue="Please provide to your designer:\n• References (image form)\n• Quantity\n• Budget";
+        } else {
+            infoValue="Please provide:\n• Detailed description of your request\n• Any relevant images or links\n• Desired timeline";
+        }
+        welcome.addFields({ name:"Information:", value: infoValue, inline:false });
+        // Footer with branding per-server
+        welcome.setFooter({ text: `${display.name} • ${member.user.tag}`, iconURL: display.icon || guild.iconURL() || undefined });
+        if(display.icon) welcome.setAuthor({ name: display.name, iconURL: display.icon });
+        welcome.setTimestamp();
+        // Thumbnail as user avatar subtle (like image has no thumbnail, but keep for context)
+        // Do not set thumbnail to keep clean like image — banner is enough
+        welcome.setThumbnail(null);
 
         // Unclaim hidden until claimed — show Claim when unclaimed, Unclaim when claimed
         const rows = this.buildTicketRows(channel.id, ticket);
@@ -395,27 +423,86 @@ export class TicketSystemService {
         await this.prisma.ticket.update({ where:{ channelId }, data:{ status: STATUS.CLOSED, closedAt: new Date() } }).catch(()=>{});
         const ch = i.guild.channels.cache.get(channelId) ?? await i.guild.channels.fetch(channelId).catch(()=>null);
         if (ch) {
-            await ch.permissionOverwrites.edit(i.guild.roles.everyone.id, { ViewChannel:false }).catch(()=>{});
-            await ch.send({ embeds:[embeds.info("Closed",`Closed by <@${i.user.id}>`)] }).catch(()=>{});
-            // Transcript
+            await ch.send({ embeds:[embeds.info("Closed",`Closed by <@${i.user.id}> — archiving...`)] }).catch(()=>{});
+            // Build HTML transcript (V5 archive)
+            let htmlFile=null;
             try {
                 const msgs = await ch.messages.fetch({ limit:100 });
-                const lines = [`Transcript for #${ch.name} (${ch.id})`, `Ticket ${ticket.id} by ${ticket.openerId}`, ""];
-                for (const m of [...msgs.values()].reverse()) lines.push(`[${m.createdAt.toISOString()}] ${m.author.tag}: ${m.content}`);
-                const buf = Buffer.from(lines.join("\n"), "utf-8");
-                const file = new AttachmentBuilder(buf).setName(`transcript-${channelId}.txt`);
-                const cfg = await this.client?.services?.settings.get(i.guild.id).catch(()=>null);
-                // Try ticket type transcript channel? For now modLog
-                if (cfg?.modLogChannelId) {
-                    const logCh = i.guild.channels.cache.get(cfg.modLogChannelId);
-                    if (logCh) await logCh.send({ embeds:[embeds.moderation("Transcript",`Ticket <#${channelId}> closed by <@${i.user.id}>`)], files:[file] }).catch(()=>{});
+                const sorted=[...msgs.values()].sort((a,b)=>a.createdTimestamp-b.createdTimestamp);
+                const branding=await this.client?.services?.branding?.get(i.guild.id).catch(()=>null);
+                const displayName=branding?.displayName || "A.N.G.E.L.";
+                const html=this.buildHtmlTranscript({ channel:ch, ticket, guild:i.guild, messages:sorted, displayName, closerId:i.user.id });
+                const buf=Buffer.from(html,"utf-8");
+                htmlFile=new AttachmentBuilder(buf).setName(`transcript-${ch.name}-${ticket.id.slice(0,4)}.html`);
+            } catch (e) { logger.error("tickets","html transcript failed", e); }
+            // Archive: move to archive category, rename, lock
+            try{
+                // Find or create archive category
+                let archiveCat = i.guild.channels.cache.find(c=> c.type===ChannelType.GuildCategory && ["archive","archives","tickets-archive","closed","closed-tickets"].includes(c.name.toLowerCase()));
+                if(!archiveCat){
+                    try{
+                        archiveCat=await i.guild.channels.create({ name:"archive", type:ChannelType.GuildCategory }).catch(()=>null);
+                    }catch{}
                 }
-                await i.user.send({ embeds:[embeds.info("Transcript",`Your ticket #${ch.name} transcript`)], files:[file] }).catch(()=>{});
-            } catch (e) { logger.error("tickets","transcript failed", e); }
-            // Optionally delete after 5s? For now keep archived
-            // await ch.delete().catch(()=>{});
+                if(archiveCat && ch.parentId!==archiveCat.id){
+                    await ch.setParent(archiveCat.id).catch(()=>{});
+                }
+                // Rename to archived- prefix and lock sending
+                const baseName=ch.name.replace(/^archived-/,"");
+                await ch.setName(`archived-${baseName}`.slice(0,100)).catch(()=>{});
+                await ch.permissionOverwrites.edit(i.guild.roles.everyone.id, { ViewChannel:true, SendMessages:false }).catch(()=>{});
+                // Also deny opener from sending (archive read-only)
+                await ch.permissionOverwrites.edit(ticket.openerId, { ViewChannel:true, SendMessages:false }).catch(()=>{});
+                // Set topic
+                await ch.setTopic(`Archived • ${ticket.id} • Closed by ${i.user.tag} • ${new Date().toISOString()}`).catch(()=>{});
+            }catch(e){ logger.error("tickets","archive move failed",e); }
+            // Send transcript to mod log and user
+            try{
+                const cfg = await this.client?.services?.settings.get(i.guild.id).catch(()=>null);
+                if (cfg?.modLogChannelId && htmlFile) {
+                    const logCh = i.guild.channels.cache.get(cfg.modLogChannelId) ?? await i.guild.channels.fetch(cfg.modLogChannelId).catch(()=>null);
+                    if (logCh?.isTextBased()) await logCh.send({ embeds:[embeds.moderation("Ticket Archived",`Ticket <#${channelId}> (\`${ch.name}\`) closed by <@${i.user.id}> • HTML archived`, [{name:"Category", value: ticket.panelType||"—", inline:true},{name:"Opener", value:`<@${ticket.openerId}>`, inline:true}])], files:[htmlFile] }).catch(()=>{});
+                }
+                if(htmlFile) await i.user.send({ embeds:[embeds.info("Transcript",`Your ticket \`${ch.name}\` has been archived — HTML transcript attached`)], files:[htmlFile] }).catch(()=>{});
+                // Also send HTML to ticket channel itself for record
+                if(htmlFile) await ch.send({ embeds:[embeds.info("Archived",`This ticket is now archived. HTML transcript saved.`)], files:[htmlFile] }).catch(()=>{});
+            }catch(e){ logger.error("tickets","archive send failed",e); }
+            // Save transcript reference to DB
+            try{ await this.prisma.ticket.update({ where:{ channelId }, data:{ transcript: `archived-${ch.name}.html` }}).catch(()=>{}); }catch{}
         }
-        await i.editReply({ embeds:[embeds.success("Closed","Ticket closed")], components:[] }).catch(()=>{});
+        await i.editReply({ embeds:[embeds.success("Closed & Archived","Ticket archived — HTML transcript created")] , components:[] }).catch(()=>{});
+    }
+    buildHtmlTranscript({ channel, ticket, guild, messages, displayName, closerId }){
+        const esc = (s)=> String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+        const rows = messages.map(m=>{
+            const time=m.createdAt.toLocaleString();
+            const avatar=m.author.displayAvatarURL?.() || "";
+            const content=esc(m.content||"").replace(/\n/g,"<br>");
+            const attachments=(m.attachments?.size ? [...m.attachments.values()].map(a=> `<a href="${esc(a.url)}" target="_blank">${esc(a.name||"attachment")}</a>`).join("<br>") : "");
+            return `<div class="msg"><img class="av" src="${esc(avatar)}" onerror="this.style.display='none'"><div><div class="meta"><span class="author">${esc(m.author.tag)}</span> <span class="time">${esc(time)}</span></div><div class="content">${content || "<i>embed/attachment</i>"}${attachments?`<div class="atts">${attachments}</div>`:""}</div></div></div>`;
+        }).join("\n");
+        return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Transcript — ${esc(channel.name)}</title>
+<style>
+body{font-family:Inter,system-ui,Arial;background:#313338;color:#dcddde;margin:0;padding:0}
+.header{background:#2b2d31;padding:24px 32px;border-bottom:1px solid #232428}
+.header h1{margin:0;font-size:24px;color:#fff} .header p{color:#b5bac1;margin:6px 0 0}
+.banner{width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin:16px 0}
+.container{max-width:900px;margin:0 auto;padding:24px}
+.msg{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #3f4147}
+.av{width:40px;height:40px;border-radius:50%;flex-shrink:0}
+.meta{font-size:14px} .author{font-weight:600;color:#fff} .time{color:#949ba4;font-size:12px;margin-left:8px}
+.content{margin-top:4px;white-space:pre-wrap;word-break:break-word;color:#dcddde}
+.atts{margin-top:6px;font-size:12px}
+.footer{padding:24px;text-align:center;color:#949ba4;font-size:12px;border-top:1px solid #232428;margin-top:24px}
+.badge{display:inline-block;background:#5865f2;color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;margin-left:8px}
+</style></head><body>
+<div class="header"><h1>${esc(ticket.panelType||"Ticket")} — ${esc(channel.name)} <span class="badge">${esc(ticket.status||"CLOSED")}</span></h1><p>Guild: ${esc(guild.name)} • Ticket: ${esc(ticket.id)} • Opener: ${esc(ticket.openerId)} • Closed by: ${esc(closerId||"system")} • ${new Date().toLocaleString()}</p></div>
+<div class="container"><div class="banner" style="background:linear-gradient(135deg,#4f46e5,#0ea5e9);height:80px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;letter-spacing:2px;font-size:28px">ORDER-HERE<br><span style="font-size:14px;letter-spacing:1px;font-weight:400;opacity:0.9">Let Us Wing Your Designs</span></div>
+<h2 style="color:#fff;margin-top:8px">${esc(displayName)} Ticket</h2>
+<p style="color:#b5bac1">Archived transcript — ${messages.length} messages</p>
+<hr style="border:0;border-top:1px solid #3f4147;margin:16px 0">
+${rows}
+<div class="footer">A.N.G.E.L. • ${esc(displayName)} • ${esc(guild.name)} • Generated ${new Date().toISOString()}</div></div></body></html>`;
     }
     async handleTranscript(i) {
         const channelId = i.customId.split(":")[3];
@@ -424,14 +511,50 @@ export class TicketSystemService {
         if (!ch) return i.editReply({ embeds:[embeds.error("Not found","Channel missing")] }).catch(()=>{});
         const msgs = await ch.messages.fetch({ limit:100 }).catch(()=>null);
         if (!msgs) return i.editReply({ embeds:[embeds.error("Failed","Cannot fetch")] }).catch(()=>{});
-        const lines = [`Transcript #${ch.name}`];
-        for (const m of [...msgs.values()].reverse()) lines.push(`[${m.createdAt.toISOString()}] ${m.author.tag}: ${m.content}`);
-        const file = new AttachmentBuilder(Buffer.from(lines.join("\n"),"utf-8")).setName(`transcript-${channelId}.txt`);
-        await i.editReply({ embeds:[embeds.success("Transcript","Here")], files:[file] }).catch(()=>{});
+        // Prefer HTML (V5) with fallback txt
+        try{
+            const ticket=await this.prisma.ticket.findUnique({ where:{ channelId }}).catch(()=>null);
+            const sorted=[...msgs.values()].sort((a,b)=>a.createdTimestamp-b.createdTimestamp);
+            const branding=await this.client?.services?.branding?.get(i.guild.id).catch(()=>null);
+            const displayName=branding?.displayName || "A.N.G.E.L.";
+            const html=this.buildHtmlTranscript({ channel:ch, ticket: ticket||{ id:channelId, panelType:"Ticket", status:"OPEN", openerId:"unknown" }, guild:i.guild, messages:sorted, displayName, closerId:i.user.id });
+            const file=new AttachmentBuilder(Buffer.from(html,"utf-8")).setName(`transcript-${ch.name}.html`);
+            return i.editReply({ embeds:[embeds.success("Transcript","HTML transcript")], files:[file] }).catch(()=>{});
+        }catch{
+            const lines = [`Transcript #${ch.name}`];
+            for (const m of [...msgs.values()].reverse()) lines.push(`[${m.createdAt.toISOString()}] ${m.author.tag}: ${m.content}`);
+            const file = new AttachmentBuilder(Buffer.from(lines.join("\n"),"utf-8")).setName(`transcript-${channelId}.txt`);
+            await i.editReply({ embeds:[embeds.success("Transcript","Here")], files:[file] }).catch(()=>{});
+        }
     }
 
     async checkAutoClose() {
         // Simple: if Panel config has autoClose hours, close tickets older than that with no activity
         // For now, no-op — placeholder for production
+    }
+
+    // V5 intelligent ticket list: [category][user][id]
+    async listTickets(guildId, { status=null, category=null, userId=null, limit=10, offset=0 }={}){
+        const where={ guildId };
+        if(status) where.status=status;
+        if(category) where.panelType=category;
+        if(userId) where.openerId=userId;
+        const [rows, total]=await Promise.all([
+            this.prisma.ticket.findMany({ where, orderBy:{ createdAt:"desc" }, take: Math.min(limit,25), skip: offset }).catch(()=>[]),
+            this.prisma.ticket.count({ where }).catch(()=>0)
+        ]);
+        // Enrich with type display
+        const typeIds=[...new Set(rows.map(r=>r.typeId).filter(Boolean))];
+        const types=typeIds.length ? await this.prisma.ticketType.findMany({ where:{ id:{ in: typeIds }}}).catch(()=>[]) : [];
+        const typeMap=new Map(types.map(t=>[t.id, t]));
+        return {
+            rows: rows.map(r=>{
+                const t= r.typeId ? typeMap.get(r.typeId) : null;
+                const cat = t?.displayName || r.panelType || "Ticket";
+                const shortId = r.id.slice(0,4).toLowerCase();
+                return { ...r, category: cat, shortId, display: `[${cat}][<@${r.openerId}>][${shortId}]` };
+            }),
+            total
+        };
     }
 }
