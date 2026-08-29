@@ -1,4 +1,8 @@
-const DEFAULT_MODULES = { moderation: true, automod: true, logging: true, orders: true, welcome: true };
+const DEFAULT_MODULES = {
+    moderation: true, automod: true, logging: true, orders: true, welcome: true,
+    tickets: true, leveling: true, economy: true, starboard: true, reactionRoles: true,
+    analytics: true, achievements: true, automation: true, giveaways: true, suggestions: true, afk: true
+};
 const DEFAULT_AUTOMOD = {
     enabled: true,
     maxMentions: 5,

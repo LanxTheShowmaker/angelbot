@@ -15,11 +15,13 @@ import { detectWords } from "./detectors/words.js";
 import { detectCaps } from "./detectors/caps.js";
 import { detectEmojiSpam } from "./detectors/emojiSpam.js";
 import { detectRaidBurst } from "./detectors/raid.js";
+import { detectRegexRules } from "./detectors/regex.js";
 
 const detectorsList = [
     { key: "mentions", fn: detectMentions },
     { key: "invites", fn: detectInvites },
     { key: "words", fn: detectWords },
+    { key: "regex", fn: detectRegexRules },
     { key: "links", fn: detectLinks },
     { key: "links", fn: detectLinkFilter },
     { key: "caps", fn: detectCaps },

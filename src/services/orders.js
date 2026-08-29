@@ -576,7 +576,7 @@ export class OrderService {
     }
     async logOrder(guild, order, note) {
         try {
-            const ch = await this.client.services.logging.channel(guild, "mod");
+            const ch = await this.client?.services?.logging.channel(guild, "mod");
             if (!ch)
                 return;
             await ch.send({ embeds: [embeds.moderation(`Design Order · ${STATUS_LABELS[order.status] ?? order.status}`, note, [

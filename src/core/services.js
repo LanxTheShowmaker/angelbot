@@ -18,6 +18,14 @@ import { GiveawayService } from "../services/giveaways.js";
 import { SuggestionService } from "../services/suggestions.js";
 import { StarboardService } from "../services/starboard.js";
 import { AfkService } from "../services/afk.js";
+import { AuditService } from "../services/audit.js";
+import { AnalyticsService } from "../services/analytics.js";
+import { IntelligenceService } from "../services/intelligence.js";
+import { RaidProtectionService } from "../services/raidProtection.js";
+import { AchievementService } from "../services/achievements.js";
+import { AutomationService } from "../services/automation.js";
+import { BackupService } from "../services/backup.js";
+import { DiagnosticsService } from "../services/diagnostics.js";
 export function createServices(client) {
     const prisma = new PrismaClient();
     // SQLite hardening for multi-guild (global bot) — WAL + busy timeout
@@ -27,7 +35,7 @@ export function createServices(client) {
     const settings = new SettingsService(prisma);
     const cases = new CasesService(prisma);
     const logging = new LoggingService(prisma, client);
-    const moderation = new ModerationService(prisma, cases, logging);
+    const moderation = new ModerationService(prisma, cases, logging, client);
     const automod = new AutomodService(prisma, client, settings, logging);
     const orders = new OrderService(prisma, client, settings);
     const fortress = new FortressService(prisma, client, settings, logging);
@@ -43,10 +51,18 @@ export function createServices(client) {
     const suggestions = new SuggestionService(prisma, client);
     const starboard = new StarboardService(prisma, client);
     const afk = new AfkService(prisma, client);
+    const audit = new AuditService(prisma, client);
+    const analytics = new AnalyticsService(prisma, client);
+    const intelligence = new IntelligenceService(prisma, client);
+    const raid = new RaidProtectionService(prisma, client, settings, logging, intelligence);
+    const achievements = new AchievementService(prisma, client);
+    const automation = new AutomationService(prisma, client);
+    const backup = new BackupService(prisma, client);
+    const diagnostics = new DiagnosticsService(prisma, client);
     // Inject prisma into assets/panels that need it (assets needs settings, already has client)
     // Cross-wire assets with prisma for convenience
     client.prisma = prisma;
-    return { settings, cases, moderation, logging, automod, orders, fortress, utility, assets, panels, tickets, welcome, leveling, reactionRoles, economy, giveaways, suggestions, starboard, afk, prisma };
+    return { settings, cases, moderation, logging, automod, orders, fortress, utility, assets, panels, tickets, welcome, leveling, reactionRoles, economy, giveaways, suggestions, starboard, afk, audit, analytics, intelligence, raid, achievements, automation, backup, diagnostics, prisma };
 }
 export function isStaff(member, config) {
     if (member.permissions.has("Administrator") || member.permissions.has("ManageGuild"))
