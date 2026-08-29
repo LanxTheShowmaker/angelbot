@@ -12,7 +12,7 @@ export default {
             { name: "  🎫  Tickets & Orders", value: "```\nPanels via /setuptickets → dropdown to open ticket\nClaim / Status / Priority / Add/Remove / Info / Close / Transcript\n/order  —  legacy design orders (use /setuptickets Orders)\n```", inline: false },
             { name: "  🔍  Info & Utility", value: "```\n/info user|server|avatar  —  unified info\n/poll  —  up to 10 options    •   /remind  —  DM reminder\n/ping  —  latency    •   /botinfo  —  about\n/support  —  ticket hub\n```", inline: false },
             { name: "  🎮  Fun  •  Packed", value: "```\n/8ball /coinflip /roll /rps  —  games\n/joke /meme /ship /hug /trivia  —  social fun\n```", inline: false },
-            { name: "  🌱  Growth  •  Engagement", value: "```\n/rank  —  leveling    •   /balance /daily  —  economy\n/reactionroles /giveaway /suggest /starboard /afk\n```", inline: false },
+            { name: "  🌱  Growth  •  Engagement", value: "```\n/rank /leaderboard  —  leveling & boards\n/balance /daily /shop  —  economy & heavenly shop\n/reactionroles /giveaway /suggest /starboard /afk\n```", inline: false },
         ], {
             author: { name: `A.N.G.E.L. • ${interaction.guild?.name ?? "Help"}`, iconURL: interaction.guild?.iconURL({ size: 64 }) ?? undefined },
             footer: `A.N.G.E.L.  •  ${interaction.client.user?.tag ?? "Help"}  •  heavenly service`,
