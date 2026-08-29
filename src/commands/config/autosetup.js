@@ -376,7 +376,7 @@ function renderSetup(guild) {
     const perms = validateSetupPermissions(guild);
     const permWarnings = perms.warnings.length ? perms.warnings.map((w) => `> ⚠  ${w}`).join("\n") : "> ⬤  All permissions granted  •  ready to build";
 
-    const embed = embeds.panel("✦  A.N.G.E.L.  •  Auto-setup", "*Craft your server's foundation — roles, channels, and grace, in one flow.*\nPick **Staff** and **Moderator** roles below. Detected roles are preselected. Toggle **Create missing roles** to let A.N.G.E.L. create `Server staff` / `Server Moderator` when none exist.\n\n*Preview first — then Run.*", [
+    const embed = embeds.panel("✦  A.N.G.E.L.  •  Auto-setup", "*Craft your server's foundation — roles, channels, and categories, in one flow.*\nPick **Staff** and **Moderator** roles below. Detected roles are preselected. Toggle **Create missing roles** to let A.N.G.E.L. create `Server staff` / `Server Moderator` when none exist.\n\n*Preview first — then Run.*", [
         { name: "  Staff", value: sel.staff.length ? sel.staff.map((id) => `<@&${id}>`).join(", ") : detectedStaff ? `> Detected: <@&${detectedStaff.id}>\n> _Tap to change_` : "> —  _select one_", inline: true },
         { name: "  Moderator", value: sel.mod.length ? sel.mod.map((id) => `<@&${id}>`).join(", ") : detectedMod ? `> Detected: <@&${detectedMod.id}>\n> _Tap to change_` : "> —  _select one_", inline: true },
         { name: "  Create missing", value: sel.createMissing ? "```diff\n+ On  —  will create Server staff / Moderator if missing\n```" : "```diff\n- Off\n```", inline: true },

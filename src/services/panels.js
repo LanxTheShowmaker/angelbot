@@ -141,7 +141,7 @@ export class PanelService {
         return null;
     }
 
-    // Renderer — aesthetic, restrained, heavenly
+    // Renderer — aesthetic, restrained
     buildPanelEmbed(panel, ticketTypes = []) {
         const cfg = panel.parsedConfig ?? (panel.config ? JSON.parse(panel.config) : {}) ?? {};
         const title = panel.title ?? cfg.title ?? PANEL_META[panel.panelType]?.defaultTitle ?? panel.panelType;
@@ -167,7 +167,7 @@ export class PanelService {
         const guildName = panel.guildId ? `A.N.G.E.L. • ${PANEL_META[panel.panelType]?.label ?? panel.panelType}` : "A.N.G.E.L.";
         const embed = embeds.panel(title, description || undefined, fields.length ? fields : undefined, {
             author: { name: guildName },
-            footer: panel.footerText ?? cfg.footerText ?? "A.N.G.E.L.  •  crafted with grace",
+            footer: panel.footerText ?? cfg.footerText ?? "A.N.G.E.L.  •  configured for this server",
             footerIcon: panel.footerIcon ?? cfg.footerIcon ?? undefined,
         });
         if (color) embed.setColor(color);

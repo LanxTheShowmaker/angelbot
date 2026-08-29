@@ -61,7 +61,7 @@ const HELP_TOPICS = {
         label: "Economy V5",
         emoji: "💰",
         description: "Economy V5",
-        title: "💰 Economy — Heavenly Coins",
+        title: "💰 Economy — Coins",
         content: [
             { name:"  Earn", value:"```\n• Message 10% chance 5-15 coins\n• Slash: /daily /weekly  •  Prefix: !daily !weekly\n• Slash: /economy work  •  Prefix: !work\n```" },
             { name:"  Spend & Trade (Both)", value:"```\nSlash: /shop  •  Prefix: !shop\nSlash: /balance  •  Prefix: !balance or !bal\nSlash: /economy gift @user  •  Prefix: !gift @user\n```" },

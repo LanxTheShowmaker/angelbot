@@ -525,7 +525,7 @@ body{font-family:Inter,system-ui,Arial;background:#313338;color:#dcddde;margin:0
 .badge{display:inline-block;background:#5865f2;color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;margin-left:8px}
 </style></head><body>
 <div class="header"><h1>${esc(ticket.panelType||"Ticket")} — ${esc(channel.name)} <span class="badge">${esc(ticket.status||"CLOSED")}</span></h1><p>Guild: ${esc(guild.name)} • Ticket: ${esc(ticket.id)} • Opener: ${esc(ticket.openerId)} • Closed by: ${esc(closerId||"system")} • ${new Date().toLocaleString()}</p></div>
-<div class="container"><div class="banner" style="background:linear-gradient(135deg,#4f46e5,#0ea5e9);height:80px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;letter-spacing:2px;font-size:28px">ORDER-HERE<br><span style="font-size:14px;letter-spacing:1px;font-weight:400;opacity:0.9">Let Us Wing Your Designs</span></div>
+<div class="container"><div class="banner" style="background:linear-gradient(135deg,#4f46e5,#0ea5e9);height:80px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;letter-spacing:2px;font-size:28px">ORDER-HERE<br><span style="font-size:14px;letter-spacing:1px;font-weight:400;opacity:0.9">Server Management</span></div>
 <h2 style="color:#fff;margin-top:8px">${esc(displayName)} Ticket</h2>
 <p style="color:#b5bac1">Archived transcript — ${messages.length} messages</p>
 <hr style="border:0;border-top:1px solid #3f4147;margin:16px 0">

@@ -16,7 +16,7 @@ function shopEmbed(guild, items, balance){
         const desc = it.description ? `\n  *${it.description.slice(0,120)}*` : "";
         return `**${i+1}.** ${emoji}**${it.name}** — **${it.price}** coins${role}${stock}${desc}`;
     }).join("\n\n");
-    return new EmbedBuilder().setColor(Theme.gold).setAuthor({ name:`${guild.name} • Heavenly Shop`, iconURL: guild.iconURL()??undefined })
+    return new EmbedBuilder().setColor(Theme.gold).setAuthor({ name:`${guild.name} • Shop`, iconURL: guild.iconURL()??undefined })
         .setDescription(lines.slice(0,4000))
         .setFooter({ text:`Your balance: ${balance} coins • Use /shop buy • A.N.G.E.L.` }).setTimestamp();
 }
@@ -24,7 +24,7 @@ function shopEmbed(guild, items, balance){
 export default {
     data: new SlashCommandBuilder()
         .setName("shop")
-        .setDescription("Heavenly shop — browse and buy with coins")
+        .setDescription("Shop — browse and buy with coins")
         .addSubcommand(s=>s.setName("view").setDescription("Browse the shop"))
         .addSubcommand(s=>s.setName("add").setDescription("Add an item (staff)")
             .addStringOption(o=>o.setName("name").setDescription("Item name (unique)").setRequired(true).setMaxLength(32))
